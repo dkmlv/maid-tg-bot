@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Custom folder icon color
+Icon?
+
+# MAC OS stuff
+.DS_Store
