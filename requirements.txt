@@ -1,2 +1,5 @@
 aiogram==2.15
+dnspython==2.1.0
 environs==9.3.4
+motor==2.5.1
+neovim==0.3.1

@@ -13,7 +13,7 @@ async def ask_location(message: types.Message):
     Greets the user.
     """
     await message.reply(
-        "Hello there!\n\nMy name is Tohru and I will try my best to make your "
+        "Hello there!\nMy name is Tohru and I will try my best to make your "
         "life a bit easier."
     )
 
