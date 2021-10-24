@@ -12,5 +12,6 @@ async def set_default_commands(dp):
             types.BotCommand("help", "how to use the bot"),
             types.BotCommand("setup", "start the setup process"),
             types.BotCommand("list", "see the list of roommates"),
+            types.BotCommand("queues", "show & modify queues"),
         ]
     )

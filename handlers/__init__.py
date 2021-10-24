@@ -1,1 +1,2 @@
-from . import commands
+from . import main_commands
+from . import basic_commands
