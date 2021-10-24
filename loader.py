@@ -12,6 +12,10 @@ uri = "mongodb+srv://{}:{}@{}/{}?retryWrites=true&w=majority".format(
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 db = client.maid
 
+# mongodb collections
+users = db.users
+teams = db.teams
+
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 
 fsm_uri = "mongodb+srv://{}:{}@{}/aiogram_fsm?retryWrites=true&w=majority".format(
