@@ -30,7 +30,7 @@ async def greet(message: types.Message):
 
         await users.update_one({"user_id": user_id}, {"$set": user_data}, upsert=True)
 
-        team_data = {f"members.{user_name}": user_id}
+        team_data = {f"members.{str(user_id)}": user_name}
         await teams.update_one({"id": team_id}, {"$set": team_data}, upsert=True)
 
         await message.answer(

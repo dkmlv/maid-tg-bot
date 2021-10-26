@@ -15,6 +15,7 @@ db = client.maid
 # mongodb collections
 users = db.users
 teams = db.teams
+queues = db.queues
 
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 
