@@ -2,8 +2,7 @@ import logging
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.utils.deep_linking import decode_payload, get_start_link
+from aiogram.utils.deep_linking import get_start_link
 
 from loader import dp, teams, users, queues
 from states.all_states import QueueSetup
@@ -78,7 +77,8 @@ async def provide_list(message: types.Message):
 @dp.message_handler(commands="queues")
 async def show_queues(message: types.Message):
     """
-    Shows all the chore queues the user has.
+    Shows all the chore queues the user has along with some options on what can
+    be done with them.
     """
     user_id = message.from_user.id
     team_id = await get_team_id(user_id)
@@ -87,15 +87,45 @@ async def show_queues(message: types.Message):
         {"id": team_id},
         {"queues": 1, "_id": 0},
     )
+    queues_data = queues_data["queues"]
 
     if queues_data:
-        await message.reply("This wasn't supposed to run.")
+        queue_names = queues_data.keys()
+
+        queues_list = ""
+        for queue in queue_names:
+            queues_list += f"- <i>{queue.capitalize()}</i>\n"
+
+        keyboard = types.InlineKeyboardMarkup(row_width=2)
+
+        buttons = [
+            types.InlineKeyboardButton(
+                text="Show Queue",
+                callback_data="show",
+            ),
+            types.InlineKeyboardButton(
+                text="Modify Queue",
+                callback_data="modify",
+            ),
+            types.InlineKeyboardButton(
+                text="Create New Queue",
+                callback_data="create",
+            ),
+        ]
+        keyboard.add(*buttons)
+
+        await message.reply(
+            f"<b>Here are all the queues you have set up:</b>\n{queues_list}\n"
+            "If you'd like me to show a certain queue, please press "
+            "<b>Show Queue</b> button below.\nTo modify a queue, please "
+            "select the <b>Modify Queue</b> option below.\n"
+            "To set up a new queue, press <b>Create New Queue</b>.",
+            reply_markup=keyboard,
+        )
     else:
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
-            types.InlineKeyboardButton(
-                text="Create New Queue", callback_data="create_queue"
-            )
+            types.InlineKeyboardButton(text="Create New Queue", callback_data="create")
         )
 
         await message.reply(
@@ -106,33 +136,232 @@ async def show_queues(message: types.Message):
         )
 
 
-@dp.callback_query_handler(text="create_queue")
-async def create_queue(call: types.CallbackQuery):
+@dp.callback_query_handler(text=["show", "modify"])
+async def ask_which_q(call: types.CallbackQuery):
     """
-    Allows the user to create a queue.
-    Offers some suggestions for queues and the ability to create a custom
-    queue.
+    Asks the user which queue they'd like to see/modify.
     """
-    keyboard = types.InlineKeyboardMarkup(row_width=2)
+    user_id = call.from_user.id
+    team_id = await get_team_id(user_id)
+    operation = call.data
 
-    buttons = [
-        types.InlineKeyboardButton(text="Cooking", callback_data="create_cooking_q"),
-        types.InlineKeyboardButton(text="Cleaning", callback_data="create_cleaning_q"),
-        types.InlineKeyboardButton(text="Shopping", callback_data="create_shopping_q"),
-        types.InlineKeyboardButton(text="Bread", callback_data="create_bread_q"),
-        types.InlineKeyboardButton(text="Garbage", callback_data="creat_garbage_q"),
-        types.InlineKeyboardButton(text="Custom", callback_data="custom_q"),
-    ]
+    if operation == "modify" and str(user_id) != team_id:
+        setup_person = await users.find_one(
+            {"user_id": int(team_id)},
+            {"name": 1, "_id": 0},
+        )
+        setup_person = setup_person["name"]
 
-    keyboard.add(*buttons)
+        await call.message.answer(
+            "Sorry, you do not have permission to modify queues.\nAs part of a "
+            "security measure, only the person who did the initial setup has "
+            "permission to modify/create queues.\nIn your list of roommates, "
+            f"that person is {setup_person}."
+        )
+    else:
+        queues_data = await queues.find_one(
+            {"id": team_id},
+            {"queues": 1, "_id": 0},
+        )
 
-    await call.message.edit_text(
-        "Awesome, you can choose to make a queue for one of the following or "
-        "create a custom queue by picking one of the options below.",
-        reply_markup=keyboard,
-    )
+        queue_names = queues_data["queues"].keys()
+
+        buttons = []
+        queues_list = ""
+        for queue in queue_names:
+            queues_list += f"- <i>{queue.capitalize()}</i>\n"
+            buttons.append(
+                types.InlineKeyboardButton(
+                    text=queue.capitalize(), callback_data=f"{operation}_{queue}"
+                )
+            )
+
+        keyboard = types.InlineKeyboardMarkup(row_width=2)
+
+        keyboard.add(*buttons)
+
+        await call.message.edit_text(
+            f"<b>Please select the queue you'd like me to {operation}.</b>"
+            f"\n{queues_list}\n",
+            reply_markup=keyboard,
+        )
 
     await call.answer()
+
+
+@dp.callback_query_handler(text_startswith="show_")
+async def show_a_queue(call: types.CallbackQuery):
+    """
+    Shows the queue a user has selected to him/her.
+    """
+    team_id = await get_team_id(call.from_user.id)
+    queue_type = call.data.split("_")[-1]
+
+    queue_array = await get_queue_array(team_id, queue_type)
+
+    queue_list = ""
+    for index, member in enumerate(queue_array, start=1):
+        name = member["name"]
+        queue_list += f"{index}. {name}\n"
+
+    await call.message.answer(f"Here is your <b>{queue_type}</b> queue:\n{queue_list}")
+
+
+@dp.callback_query_handler(text_startswith="modify_")
+async def modify_a_queue(call: types.CallbackQuery):
+    """
+    Provides some options to modify the queue (delete, reorder, reassign turn)
+    """
+    team_id = await get_team_id(call.from_user.id)
+    queue_type = call.data.split("_")[-1]
+
+    queue_array = await get_queue_array(team_id, queue_type)
+
+    queue_list = ""
+    for index, member in enumerate(queue_array, start=1):
+        name = member["name"]
+        queue_list += f"{index}. {name}\n"
+
+    await call.message.answer(f"Here is your <b>{queue_type}</b> queue:\n{queue_list}")
+
+
+@dp.callback_query_handler(text="create")
+async def ask_queue_type(call: types.CallbackQuery):
+    """
+    Asks the user to pick a queue type (which is essentially a queue name).
+    """
+    user_id = call.from_user.id
+    team_id = await get_team_id(user_id)
+
+    if str(user_id) != team_id:
+        setup_person = await users.find_one(
+            {"user_id": int(team_id)},
+            {"name": 1, "_id": 0},
+        )
+        setup_person = setup_person["name"]
+
+        await call.message.answer(
+            "Sorry, you do not have permission to create queues.\nAs part of a "
+            "security measure, only the person who did the initial setup has "
+            "permission to modify/create queues.\nIn your list of roommates, "
+            f"that person is {setup_person}."
+        )
+    else:
+        keyboard = types.InlineKeyboardMarkup(row_width=2)
+
+        buttons = [
+            types.InlineKeyboardButton(text="Cooking", callback_data="create_cooking"),
+            types.InlineKeyboardButton(
+                text="Cleaning", callback_data="create_cleaning"
+            ),
+            types.InlineKeyboardButton(
+                text="Shopping", callback_data="create_shopping"
+            ),
+            types.InlineKeyboardButton(text="Bread", callback_data="create_bread"),
+            types.InlineKeyboardButton(text="Garbage", callback_data="create_garbage"),
+            types.InlineKeyboardButton(text="Custom", callback_data="custom"),
+        ]
+
+        keyboard.add(*buttons)
+
+        await call.message.edit_text(
+            "Awesome, you can choose to make a queue for one of the following or "
+            "create a custom queue by picking one of the options below.",
+            reply_markup=keyboard,
+        )
+
+    await call.answer()
+
+
+async def create_queue(team_id, queue_type):
+    """
+    Creates a new queue array in mongodb and returns it.
+    team_id -> used to obtain the queues object for the particular group of
+    roommates.
+    queue_type -> basically the name of the queue
+    """
+    members = await get_team_members(team_id)
+
+    queue_array = []
+    for user_id, name in members.items():
+        entry = {
+            "user_id": user_id,
+            "name": name,
+            "current_turn": False,
+        }
+        queue_array.append(entry)
+
+    data = {f"queues.{queue_type}": queue_array}
+    await queues.update_one({"id": team_id}, {"$set": data}, upsert=True)
+
+    return queue_array
+
+
+async def get_queue_list(queue_array):
+    """
+    Returns the queue list using the queue array.
+    (this function will mainly be called by another function)
+    """
+    queue_list = ""
+    for index, member in enumerate(queue_array, start=1):
+        name = member["name"]
+        queue_list += f"{index}. {name}\n"
+
+    return queue_list
+
+
+@dp.callback_query_handler(text="custom")
+async def create_custom_q(call: types.CallbackQuery):
+    """
+    Allows the user to create a custom queue.
+    Asks the user to provide a name for the custom queue.
+    """
+    await call.message.delete_reply_markup()
+
+    await call.message.edit_text("What should the queue be called?")
+
+    await QueueSetup.waiting_for_queue_name.set()
+
+    await call.answer()
+
+
+@dp.message_handler(state=QueueSetup.waiting_for_queue_name)
+async def name_custom_q(message: types.Message, state: FSMContext):
+    """
+    Names the custom queue and proceeds with the rest of the queue creation.
+    """
+    if not message.text.isalpha():
+        await message.answer(
+            "Queue name can only contain characters of the alphabet (no spaces "
+            "or other special symbols)"
+        )
+    else:
+        team_id = await get_team_id(message.from_user.id)
+        queue_type = message.text
+
+        queue_array = await create_queue(team_id, queue_type)
+        queue_list = await get_queue_list(queue_array)
+
+        keyboard = types.InlineKeyboardMarkup()
+        buttons = [
+            types.InlineKeyboardButton(
+                text="Reorder", callback_data=f"reorder_{queue_type}"
+            ),
+            types.InlineKeyboardButton(
+                text="Done", callback_data="f{queue_type}_ready"
+            ),
+        ]
+        keyboard.add(*buttons)
+
+        await message.answer(
+            f"<b>Here is your {queue_type} queue:</b>\n{queue_list}\nIf you would like "
+            f"the {queue_type} queue to have a different order, choose the <i><b>Reorder"
+            "</b></i> option below.\nOnce you are happy with the queue order, select "
+            "<i><b>Done</b></i>.",
+            reply_markup=keyboard,
+        )
+
+        await state.finish()
 
 
 @dp.callback_query_handler(text_startswith="create_")
@@ -142,32 +371,17 @@ async def create_specific_q(call: types.CallbackQuery):
     """
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
+    queue_type = call.data.split("_")[-1]
 
-    members = await get_team_members(team_id)
-
-    queue_data = []
-    for user_id, name in members.items():
-        entry = {
-            "user_id": user_id,
-            "name": name,
-            "current_turn": False,
-        }
-        queue_data.append(entry)
-
-    queue_type = call.data.split("_")[1]
-    q_data = {f"queues.{queue_type}": queue_data}
-    await queues.update_one({"id": team_id}, {"$set": q_data}, upsert=True)
-
-    queue_list = ""
-    for index, name in enumerate(members.values(), start=1):
-        queue_list += f"{index}. {name}\n"
+    queue_array = await create_queue(team_id, queue_type)
+    queue_list = await get_queue_list(queue_array)
 
     keyboard = types.InlineKeyboardMarkup()
     buttons = [
         types.InlineKeyboardButton(
             text="Reorder", callback_data=f"reorder_{queue_type}"
         ),
-        types.InlineKeyboardButton(text="Done", callback_data="f{queue_type}_ready"),
+        types.InlineKeyboardButton(text="Done", callback_data=f"{queue_type}_ready"),
     ]
     keyboard.add(*buttons)
 
@@ -234,11 +448,9 @@ async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
 
     keyboard = types.InlineKeyboardMarkup()
 
-    queue_list = ""
-    for index, member in enumerate(queue_array, start=1):
-        name = member["name"]
-        queue_list += f"{index}. {name}\n"
+    queue_list = await get_queue_list(queue_array)
 
+    for index, member in enumerate(queue_array, start=1):
         keyboard.add(
             types.InlineKeyboardButton(
                 text=str(index),
@@ -277,17 +489,14 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     q_data = {f"queues.{queue_type}": queue_array}
     await queues.update_one({"id": team_id}, {"$set": q_data}, upsert=True)
 
-    queue_list = ""
-    for index, member in enumerate(queue_array, start=1):
-        name = member["name"]
-        queue_list += f"{index}. {name}\n"
+    queue_list = await get_queue_list(queue_array)
 
     keyboard = types.InlineKeyboardMarkup()
     buttons = [
         types.InlineKeyboardButton(
             text="Reorder", callback_data=f"reorder_{queue_type}"
         ),
-        types.InlineKeyboardButton(text="Done", callback_data="f{queue_type}_ready"),
+        types.InlineKeyboardButton(text="Done", callback_data=f"{queue_type}_ready"),
     ]
     keyboard.add(*buttons)
 
@@ -304,25 +513,93 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
 
 
-@dp.callback_query_handler(text="custom_q")
-async def create_custom_q(call: types.CallbackQuery):
+@dp.callback_query_handler(text_endswith="_ready", state="*")
+async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
     """
-    Allows the user to create a custom queue.
-    Asks the user to provide a name for the custom queue.
+    Asks the user whose turn it is on the list to do the chore.
     """
-    await call.message.delete_reply_markup()
+    await QueueSetup.marking.set()
 
-    await call.message.edit_text("What should the queue be called?")
+    team_id = await get_team_id(call.from_user.id)
 
-    await QueueSetup.waiting_for_queue_name.set()
+    queue_type = call.data.split("_")[0]
+    await state.update_data(queue_type=queue_type)
+
+    queue_array = await get_queue_array(team_id, queue_type)
+    await state.update_data(queue_array=queue_array)
+
+    keyboard = types.InlineKeyboardMarkup()
+
+    queue_list = ""
+    for index, member in enumerate(queue_array, start=1):
+        name = member["name"]
+        queue_list += f"{index}. {name}\n"
+
+        keyboard.add(
+            types.InlineKeyboardButton(
+                text=name,
+                callback_data=f"turn_{index-1}",
+            )
+        )
+
+    await call.message.edit_text(
+        f"<b>Select the person whose turn it is to do the chore.</b>\n{queue_list}",
+        reply_markup=keyboard,
+    )
 
     await call.answer()
 
 
-@dp.message_handler(state=QueueSetup.waiting_for_queue_name)
-async def name_custom_q(message: types.Message, state: FSMContext):
+@dp.callback_query_handler(text_startswith="turn_", state=QueueSetup.marking)
+async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     """
-    Names the custom queue and proceeds with the rest of the queue creation.
+    Changes the 'current_turn' status of the selected user to True.
+    Asks if there are any other roommates to select
+    (e.g. for chores that are done in pairs)
     """
-    await state.finish()
-    pass
+    state_data = await state.get_data()
+
+    queue_type = state_data["queue_type"]
+    queue_array = state_data["queue_array"]
+
+    position = int(call.data.split("_")[1])
+
+    queue_array[position]["current_turn"] = True
+
+    team_id = await get_team_id(call.from_user.id)
+
+    q_data = {f"queues.{queue_type}": queue_array}
+    await queues.update_one({"id": team_id}, {"$set": q_data}, upsert=True)
+
+    keyboard = types.InlineKeyboardMarkup()
+
+    queue_list = ""
+    for index, member in enumerate(queue_array, start=1):
+        name = member["name"]
+        current_turn = member["current_turn"]
+
+        if current_turn:
+            queue_list += f"<b><i>{index}. {name}</i></b>\n"
+        else:
+            queue_list += f"{index}. {name}\n"
+
+        keyboard.add(
+            types.InlineKeyboardButton(
+                text=name,
+                callback_data="turn_{index-1}",
+            )
+        )
+
+    keyboard.add(
+        types.InlineKeyboardButton(text="Done", callback_data="assigning_done")
+    )
+
+    await call.message.edit_text(
+        "Awesome, if this chore is usually done by more than one person at a "
+        "time, please select another person whose turn it is to do this chore."
+        f"\n{queue_list}\nOnce you are done, press <i><b>Done</b></i>.",
+        reply_markup=keyboard,
+    )
+
+    await call.answer()
+
