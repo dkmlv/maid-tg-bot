@@ -48,3 +48,27 @@ async def get_queue_array(team_id, queue_type):
 
     return queue_array
 
+
+async def get_queue_list(queue_array):
+    """
+    Returns the queue list using the queue array.
+    (this function will mainly be called by another function)
+    """
+    queue_list = ""
+    for index, member in enumerate(queue_array, start=1):
+        name = member["name"]
+        queue_list += f"{index}. {name}\n"
+
+    return queue_list
+
+async def get_setup_person(team_id):
+    """
+    Returns the name of the person who is doing all the setup in a given team.
+    """
+    setup_person = await users.find_one(
+        {"user_id": int(team_id)},
+        {"name": 1, "_id": 0},
+    )
+
+    return  setup_person["name"]
+
