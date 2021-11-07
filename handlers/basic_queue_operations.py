@@ -5,18 +5,22 @@ from aiogram.dispatcher import FSMContext
 
 from loader import dp, users, queues
 from states.all_states import QueueSetup
-from utils.get_db_data import get_queue_array, get_team_id, get_setup_person
+from utils.get_db_data import (
+    get_queue_array,
+    get_queue_list,
+    get_team_id,
+    get_setup_person,
+)
 from utils.sticker_file_ids import NOPE_STICKER
 
 
-@dp.message_handler(commands="queues")
+@dp.message_handler(commands="queues", state="*")
 async def show_queues(message: types.Message):
     """
     Shows all the chore queues the user has along with some options on what can
     be done with them.
     """
-    user_id = message.from_user.id
-    team_id = await get_team_id(user_id)
+    team_id = await get_team_id(message.from_user.id)
 
     queues_data = await queues.find_one(
         {"id": team_id},
@@ -132,10 +136,7 @@ async def show_a_queue(call: types.CallbackQuery):
 
     queue_array = await get_queue_array(team_id, queue_type)
 
-    queue_list = ""
-    for index, member in enumerate(queue_array, start=1):
-        name = member["name"]
-        queue_list += f"{index}. {name}\n"
+    queue_list = await get_queue_list(queue_array)
 
     await call.message.answer(f"Here is your <b>{queue_type}</b> queue:\n{queue_list}")
 
@@ -145,16 +146,5 @@ async def modify_a_queue(call: types.CallbackQuery):
     """
     Provides some options to modify the queue (delete, reorder, reassign turn)
     """
-    team_id = await get_team_id(call.from_user.id)
-    queue_type = call.data.split("_")[-1]
-
-    queue_array = await get_queue_array(team_id, queue_type)
-
-    queue_list = ""
-    for index, member in enumerate(queue_array, start=1):
-        name = member["name"]
-        queue_list += f"{index}. {name}\n"
-
-    await call.message.answer(f"Here is your <b>{queue_type}</b> queue:\n{queue_list}")
-
+    pass
 

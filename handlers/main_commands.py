@@ -6,23 +6,17 @@ from aiogram.utils.deep_linking import get_start_link
 
 from loader import dp, teams, users, queues
 from states.all_states import QueueSetup
-from utils.get_db_data import get_queue_array, get_team_id, get_queue_list 
+from utils.get_db_data import get_queue_array, get_team_id, get_queue_list
 
 
-@dp.callback_query_handler(text_endswith="_ready", state="*")
+@dp.callback_query_handler(text="order_ready", state=QueueSetup.creating_queue)
 async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
     """
     Asks the user whose turn it is on the list to do the chore.
     """
-    await QueueSetup.marking.set()
+    state_data = await state.get_data()
 
-    team_id = await get_team_id(call.from_user.id)
-
-    queue_type = call.data.split("_")[0]
-    await state.update_data(queue_type=queue_type)
-
-    queue_array = await get_queue_array(team_id, queue_type)
-    await state.update_data(queue_array=queue_array)
+    queue_array = state_data["queue_array"]
 
     keyboard = types.InlineKeyboardMarkup()
 
@@ -34,7 +28,7 @@ async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
         keyboard.add(
             types.InlineKeyboardButton(
                 text=name,
-                callback_data=f"turn_{index-1}",
+                callback_data=f"mark_{index-1}",
             )
         )
 
@@ -46,7 +40,7 @@ async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text_startswith="turn_", state=QueueSetup.marking)
+@dp.callback_query_handler(text_startswith="mark_", state=QueueSetup.creating_queue)
 async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     """
     Changes the 'current_turn' status of the selected user to True.
@@ -55,7 +49,7 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     """
     state_data = await state.get_data()
 
-    queue_type = state_data["queue_type"]
+    queue_name = state_data["queue_name"]
     queue_array = state_data["queue_array"]
 
     position = int(call.data.split("_")[1])
@@ -65,8 +59,8 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
 
     team_id = await get_team_id(call.from_user.id)
 
-    q_data = {f"queues.{queue_type}": queue_array}
-    await queues.update_one({"id": team_id}, {"$set": q_data}, upsert=True)
+    queue_data = {f"queues.{queue_name}": queue_array}
+    await queues.update_one({"id": team_id}, {"$set": queue_data}, upsert=True)
 
     keyboard = types.InlineKeyboardMarkup()
 
@@ -101,11 +95,10 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text="assigning_done", state=QueueSetup.marking)
-async def reset(call: types.CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(text="assigning_done", state=QueueSetup.creating_queue)
+async def ask_chore_frequency(call: types.CallbackQuery, state: FSMContext):
     """
-    Test.
+    Asks the user how often the chore is done.
     """
     await state.finish()
     await call.answer()
-

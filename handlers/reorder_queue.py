@@ -11,21 +11,16 @@ from utils.get_db_data import (
     get_queue_list,
 )
 
-@dp.callback_query_handler(text_startswith="reorder_")
+
+@dp.callback_query_handler(text="reorder", state=QueueSetup.creating_queue)
 async def ask_to_pick(call: types.CallbackQuery, state: FSMContext):
     """
     First part of reordering the queue.
     Asks the user to pick an item to move on the list.
     """
-    await QueueSetup.reordering.set()
+    state_data = await state.get_data()
 
-    team_id = await get_team_id(call.from_user.id)
-
-    queue_type = call.data.split("_")[-1]
-    await state.update_data(q_type=queue_type)
-
-    queue_array = await get_queue_array(team_id, queue_type)
-    await state.update_data(queue=queue_array)
+    queue_array = state_data["queue_array"]
 
     keyboard = types.InlineKeyboardMarkup()
 
@@ -49,7 +44,7 @@ async def ask_to_pick(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text_startswith="from_", state=QueueSetup.reordering)
+@dp.callback_query_handler(text_startswith="from_", state=QueueSetup.creating_queue)
 async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
     """
     Second part of reordering the queue.
@@ -59,7 +54,7 @@ async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
     await state.update_data(from_position=from_position)
 
     queue_data = await state.get_data()
-    queue_array = queue_data["queue"]
+    queue_array = queue_data["queue_array"]
 
     keyboard = types.InlineKeyboardMarkup()
 
@@ -82,48 +77,48 @@ async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text_startswith="to_", state=QueueSetup.reordering)
+@dp.callback_query_handler(text_startswith="to_", state=QueueSetup.creating_queue)
 async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     """
     Third & final part of reordering the queue.
     Actually reorders the queue (big surprise)
     """
-    queue_data = await state.get_data()
+    state_data = await state.get_data()
 
-    from_position = queue_data["from_position"]
+    from_position = state_data["from_position"]
     to_position = int(call.data.split("_")[-1])
 
-    queue_array = queue_data["queue"]
-    queue_type = queue_data["q_type"]
+    queue_array = state_data["queue_array"]
+    queue_name = state_data["queue_name"]
 
     item_to_move = queue_array.pop(from_position)
     queue_array.insert(to_position, item_to_move)
 
+    await state.update_data(queue_array=queue_array)
+
     team_id = await get_team_id(call.from_user.id)
 
-    q_data = {f"queues.{queue_type}": queue_array}
-    await queues.update_one({"id": team_id}, {"$set": q_data}, upsert=True)
+    queue_data = {f"queues.{queue_name}": queue_array}
+    await queues.update_one({"id": team_id}, {"$set": queue_data}, upsert=True)
 
     queue_list = await get_queue_list(queue_array)
 
     keyboard = types.InlineKeyboardMarkup()
     buttons = [
         types.InlineKeyboardButton(
-            text="Reorder", callback_data=f"reorder_{queue_type}"
+            text="Reorder", callback_data=f"reorder"
         ),
-        types.InlineKeyboardButton(text="Done", callback_data=f"{queue_type}_ready"),
+        types.InlineKeyboardButton(text="Done", callback_data=f"order_ready"),
     ]
     keyboard.add(*buttons)
 
     await call.message.edit_text(
-        f"<b>Here is your {queue_type} queue:</b>\n{queue_list}\nIf you would like "
-        f"the {queue_type} queue to have a different order, choose the <i><b>Reorder"
+        f"<b>Here is your {queue_name} queue:</b>\n{queue_list}\nIf you would like "
+        f"the {queue_name} queue to have a different order, choose the <i><b>Reorder"
         "</b></i> option below.\nOnce you are happy with the queue order, select "
         "<i><b>Done</b></i>.",
         reply_markup=keyboard,
     )
 
     await call.answer()
-
-    await state.finish()
 

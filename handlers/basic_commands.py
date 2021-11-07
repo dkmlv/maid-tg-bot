@@ -1,3 +1,6 @@
+# TODO: in the list command add an inline keyboard with one delete button
+# TODO: change the setup command so that it doesnt fuck everything up for users
+
 import logging
 
 from aiogram import types
@@ -5,7 +8,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.utils.deep_linking import decode_payload, get_start_link
 
 from loader import dp, queues, teams, users
-from utils.get_db_data import get_setup_person
+from utils.get_db_data import get_setup_person, get_team_members
 from utils.sticker_file_ids import (
     HI_STICKER,
     HERE_STICKER,
@@ -20,6 +23,8 @@ async def greet(message: types.Message):
     Greets the user.
     """
     args = message.get_args()
+
+    await message.answer_sticker(HI_STICKER)
 
     if args:
         payload = decode_payload(args)
@@ -41,14 +46,12 @@ async def greet(message: types.Message):
 
         setup_person = await get_setup_person(team_id)
 
-        await message.answer_sticker(HI_STICKER)
-
         await message.answer(
-            "Hello there!\nMy name is <b>Tohru</b> and I will try my best to "
+            "Hello there!\n\nMy name is <b>Tohru</b> and I will try my best to "
             "make your and your roommates' lives a bit easier.\nSince you have "
             "signed up with a link shared by your roommate, you don't have "
-            "to do anything. Your roommate will do all the setup.\n ."
-            " I'm looking forward to working with you."
+            "to do anything. Your roommate will do all the setup.\n\n"
+            "I'm looking forward to working with you."
         )
 
         await message.answer(
@@ -56,8 +59,6 @@ async def greet(message: types.Message):
             "the whole setup and everyone appreciates a sincere 'thank you'"
         )
     else:
-        await message.answer_sticker(HI_STICKER)
-
         await message.answer(
             "Hello there!\nMy name is Tohru and I will try my best to make your "
             "and your roommates' lives a bit easier\nTo get started with the "
@@ -99,9 +100,9 @@ async def initial_setup(message: types.Message):
         "click on the link yourself).\n"
         "This link will just let me know that people who click on it are "
         "your roommates and you will be able to see them on the list using "
-        "the <i>/list</i> command.\n"
+        "the /list command.\n"
         "Once you see that all of your roommates are on the list, you can "
-        "proceed with the setup of queues & reminders."
+        "proceed with the setup of queues."
     )
 
 
@@ -110,18 +111,7 @@ async def provide_list(message: types.Message):
     """
     Provides the list of roommates that the user has.
     """
-    user_id = message.from_user.id
-    data = await users.find_one(
-        {"user_id": user_id},
-        {"team_id": 1, "_id": 0},
-    )
-    team_id = data["team_id"]
-
-    team_data = await teams.find_one(
-        {"id": team_id},
-        {"members": 1, "_id": 0},
-    )
-    members = team_data["members"]
+    members = await get_team_members(message.from_user.id)
 
     mates_list = ""
     for index, name in enumerate(members.values(), start=1):
@@ -148,4 +138,6 @@ async def another_help_message(message: types.Message):
     Will ask the user to type help to get more info.
     This function will be called when the user types a random message.
     """
-    await message.reply("See <code>/help</code> for more information.")
+    await message.answer_sticker(QUESTION_STICKER)
+    await message.reply("See /help for more information.")
+

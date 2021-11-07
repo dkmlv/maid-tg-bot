@@ -21,11 +21,12 @@ async def get_team_id(user_id):
     return team_id
 
 
-async def get_team_members(team_id):
+async def get_team_members(user_id):
     """
-    Return the team members a user has based on his/her team id.
+    Return the team members a user has based on his/her user id.
     (this is also another very simple query to mongodb)
     """
+    team_id = await get_team_id(user_id)
     team_data = await teams.find_one(
         {"id": team_id},
         {"members": 1, "_id": 0},
@@ -35,16 +36,16 @@ async def get_team_members(team_id):
     return members
 
 
-async def get_queue_array(team_id, queue_type):
+async def get_queue_array(team_id, queue_name):
     """
-    Returns the queue array for a particular queue type for a specific team id.
+    Returns the queue array for a particular queue for a specific team id.
     (yet again a very simple search query)
     """
     queues_data = await queues.find_one(
         {"id": team_id},
         {"queues": 1, "_id": 0},
     )
-    queue_array = queues_data["queues"][queue_type]
+    queue_array = queues_data["queues"][queue_name]
 
     return queue_array
 
@@ -57,9 +58,15 @@ async def get_queue_list(queue_array):
     queue_list = ""
     for index, member in enumerate(queue_array, start=1):
         name = member["name"]
-        queue_list += f"{index}. {name}\n"
+        current_turn = member["current_turn"]
+
+        if current_turn:
+            queue_list += f"<b><i>{index}. {name}</i></b>\n"
+        else:
+            queue_list += f"{index}. {name}\n"
 
     return queue_list
+
 
 async def get_setup_person(team_id):
     """
@@ -70,5 +77,5 @@ async def get_setup_person(team_id):
         {"name": 1, "_id": 0},
     )
 
-    return  setup_person["name"]
+    return setup_person["name"]
 
