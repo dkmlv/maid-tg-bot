@@ -1,18 +1,13 @@
-# TODO: in the list command add an inline keyboard with one delete button
-# TODO: change the setup command so that it doesnt fuck everything up for users
-
 import logging
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
-from aiogram.utils.deep_linking import decode_payload, get_start_link
+from aiogram.utils.deep_linking import decode_payload
 
-from loader import dp, queues, teams, users
+from loader import dp, teams, users
 from utils.get_db_data import get_setup_person, get_team_members
 from utils.sticker_file_ids import (
     HI_STICKER,
     HERE_STICKER,
-    CONFUSED_STICKER,
     QUESTION_STICKER,
 )
 
@@ -45,6 +40,10 @@ async def greet(message: types.Message):
         await teams.update_one({"id": team_id}, {"$set": team_data}, upsert=True)
 
         setup_person = await get_setup_person(team_id)
+        # notify the setup person that someone signed up with invite link
+        await dp.bot.send_message(
+            int(team_id), f"{user_name} just signed up with your invite link."
+        )
 
         await message.answer(
             "Hello there!\n\nMy name is <b>Tohru</b> and I will try my best to "
@@ -56,54 +55,14 @@ async def greet(message: types.Message):
 
         await message.answer(
             f"P.S. Maybe thank {setup_person}, because they are willing to do "
-            "the whole setup and everyone appreciates a sincere 'thank you'"
+            "the whole setup and everyone appreciates a sincere 'thank you'."
         )
     else:
         await message.answer(
             "Hello there!\nMy name is Tohru and I will try my best to make your "
-            "and your roommates' lives a bit easier\nTo get started with the "
-            "setup, use the <i>/setup</i> command."
+            "and your roommates' lives a bit easier.\nTo get started with the "
+            "setup, use the <b>/setup</b> command."
         )
-
-
-@dp.message_handler(commands="setup", state="*")
-async def initial_setup(message: types.Message):
-    """
-    Adds the user to the users collection and creates a team for the user.
-    Generates and sends back an invite link to share with roommates.
-    The link is generated using the user's telegram id and will be used to let
-    the bot know that this new user is roommates with the user who sent the
-    link.
-    """
-    user_name = message.from_user.full_name
-    user_id = message.from_user.id
-    team_id = str(user_id)
-
-    user_data = {
-        "name": user_name,
-        "user_id": user_id,
-        "team_id": team_id,
-    }
-
-    await users.update_one({"user_id": user_id}, {"$set": user_data}, upsert=True)
-
-    team_data = {"id": team_id, "members": {str(user_id): user_name}}
-    await teams.update_one({"id": team_id}, {"$set": team_data}, upsert=True)
-
-    queues_data = {"id": team_id, "queues": {}}
-    await queues.update_one({"id": team_id}, {"$set": queues_data}, upsert=True)
-
-    link = await get_start_link(payload=team_id, encode=True)
-    await message.reply(
-        f"Here's your <b>invite link</b>:\n{link}\n\n"
-        "You should share it with your roommates (<b>IMPORTANT:</b> do not "
-        "click on the link yourself).\n"
-        "This link will just let me know that people who click on it are "
-        "your roommates and you will be able to see them on the list using "
-        "the /list command.\n"
-        "Once you see that all of your roommates are on the list, you can "
-        "proceed with the setup of queues."
-    )
 
 
 @dp.message_handler(commands="list", state="*")
@@ -139,5 +98,5 @@ async def another_help_message(message: types.Message):
     This function will be called when the user types a random message.
     """
     await message.answer_sticker(QUESTION_STICKER)
-    await message.reply("See /help for more information.")
+    await message.reply("See <b>/help</b> for more information.")
 

@@ -10,6 +10,7 @@ from utils.get_db_data import (
     get_team_id,
     get_queue_list,
 )
+from utils.sticker_file_ids import CONFUSED_STICKER
 
 
 @dp.callback_query_handler(text="reorder", state=QueueSetup.creating_queue)
@@ -91,23 +92,30 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     queue_array = state_data["queue_array"]
     queue_name = state_data["queue_name"]
 
-    item_to_move = queue_array.pop(from_position)
-    queue_array.insert(to_position, item_to_move)
-
-    await state.update_data(queue_array=queue_array)
-
-    team_id = await get_team_id(call.from_user.id)
-
-    queue_data = {f"queues.{queue_name}": queue_array}
-    await queues.update_one({"id": team_id}, {"$set": queue_data}, upsert=True)
-
     queue_list = await get_queue_list(queue_array)
+
+    # reordering doesnt make any sense
+    if from_position == to_position:
+        name = call.from_user.first_name
+
+        await call.message.answer_sticker(CONFUSED_STICKER)
+        await call.message.answer(
+            f"Are you sure that you are not drunk, {name}-san?",
+        )
+    else:
+        item_to_move = queue_array.pop(from_position)
+        queue_array.insert(to_position, item_to_move)
+
+        await state.update_data(queue_array=queue_array)
+
+        team_id = await get_team_id(call.from_user.id)
+
+        queue_data = {f"queues.{queue_name}": queue_array}
+        await queues.update_one({"id": team_id}, {"$set": queue_data}, upsert=True)
 
     keyboard = types.InlineKeyboardMarkup()
     buttons = [
-        types.InlineKeyboardButton(
-            text="Reorder", callback_data=f"reorder"
-        ),
+        types.InlineKeyboardButton(text="Reorder", callback_data=f"reorder"),
         types.InlineKeyboardButton(text="Done", callback_data=f"order_ready"),
     ]
     keyboard.add(*buttons)
@@ -121,4 +129,3 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     )
 
     await call.answer()
-

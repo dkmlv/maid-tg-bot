@@ -2,9 +2,8 @@ import logging
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.utils.deep_linking import get_start_link
 
-from loader import dp, teams, users, queues
+from loader import dp, queues
 from states.all_states import QueueSetup
 from utils.get_db_data import get_queue_array, get_team_id, get_queue_list
 
@@ -77,13 +76,11 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
         keyboard.add(
             types.InlineKeyboardButton(
                 text=name,
-                callback_data=f"turn_{index-1}",
+                callback_data=f"mark_{index-1}",
             )
         )
 
-    keyboard.add(
-        types.InlineKeyboardButton(text="Done", callback_data="assigning_done")
-    )
+    keyboard.add(types.InlineKeyboardButton(text="Done", callback_data="marking_done"))
 
     await call.message.edit_text(
         "Awesome, if this chore is usually done by more than one person at a "
@@ -94,11 +91,3 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
 
     await call.answer()
 
-
-@dp.callback_query_handler(text="assigning_done", state=QueueSetup.creating_queue)
-async def ask_chore_frequency(call: types.CallbackQuery, state: FSMContext):
-    """
-    Asks the user how often the chore is done.
-    """
-    await state.finish()
-    await call.answer()
