@@ -33,7 +33,7 @@ async def show_queues(message: types.Message):
 
         queues_list = ""
         for queue in queue_names:
-            queues_list += f"- <i>{queue.capitalize()}</i>\n"
+            queues_list += f"- <i>{queue}</i>\n"
 
         keyboard = types.InlineKeyboardMarkup(row_width=2)
 

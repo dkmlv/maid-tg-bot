@@ -162,7 +162,7 @@ async def create_specific_q(call: types.CallbackQuery, state: FSMContext):
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
 
-    queue_name = call.data.split("_")[-1]
+    queue_name = call.data.split("_")[-1].capitalize()
 
     queue_data = await queues.find_one(
         {"id": team_id},
