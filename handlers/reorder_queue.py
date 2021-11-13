@@ -6,7 +6,6 @@ from aiogram.dispatcher import FSMContext
 from loader import dp, queues
 from states.all_states import QueueSetup
 from utils.get_db_data import (
-    get_queue_array,
     get_team_id,
     get_queue_list,
 )

@@ -5,17 +5,16 @@ from aiogram.dispatcher import FSMContext
 
 from loader import dp, queues
 from states.all_states import QueueSetup
-from utils.get_db_data import get_queue_array, get_team_id, get_queue_list
 
 
 WEEK_DAYS = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+    "sunday",
 ]
 
 
@@ -39,11 +38,12 @@ async def ask_chore_frequency(call: types.CallbackQuery):
 
 
 @dp.callback_query_handler(text="every_day", state=QueueSetup.creating_queue)
-async def set_often_freq(call: types.CallbackQuery):
+async def set_often_freq(call: types.CallbackQuery, state: FSMContext):
     """
     Adds a job to the APScheduler that will be run every day.
     """
     await call.answer()
+    await state.finish()
 
 
 @dp.callback_query_handler(text="once", state=QueueSetup.creating_queue)
@@ -57,17 +57,9 @@ async def ask_which_day(call: types.CallbackQuery):
 
     for day in WEEK_DAYS:
         buttons.append(
-            types.InlineKeyboardButton(text=day, callback_data=day.lower()),
+            types.InlineKeyboardButton(text=day.title(), callback_data=day),
         )
-    # buttons = [
-        # types.InlineKeyboardButton(text="Monday", callback_data="monday"),
-        # types.InlineKeyboardButton(text="Tuesday", callback_data="tuesday"),
-        # types.InlineKeyboardButton(text="Wednesday", callback_data="wednesday"),
-        # types.InlineKeyboardButton(text="Thursday", callback_data="thursday"),
-        # types.InlineKeyboardButton(text="Friday", callback_data="friday"),
-        # types.InlineKeyboardButton(text="Saturday", callback_data="saturday"),
-        # types.InlineKeyboardButton(text="Sunday", callback_data="sunday"),
-    # ]
+
     keyboard.add(*buttons)
 
     await call.message.edit_text(
@@ -75,4 +67,13 @@ async def ask_which_day(call: types.CallbackQuery):
         reply_markup=keyboard,
     )
     await call.answer()
+
+
+@dp.callback_query_handler(text=WEEK_DAYS, state=QueueSetup.creating_queue)
+async def set_once_freq(call: types.CallbackQuery, state: FSMContext):
+    """
+    Adds a job to the APScheduler that will be run once every week.
+    """
+    await call.answer()
+    await state.finish()
 
