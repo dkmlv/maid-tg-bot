@@ -91,8 +91,6 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     queue_array = state_data["queue_array"]
     queue_name = state_data["queue_name"]
 
-    queue_list = await get_queue_list(queue_array)
-
     # reordering doesnt make any sense
     if from_position == to_position:
         name = call.from_user.first_name
@@ -119,6 +117,8 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     ]
     keyboard.add(*buttons)
 
+    queue_list = await get_queue_list(queue_array)
+
     await call.message.edit_text(
         f"<b>Here is your {queue_name} queue:</b>\n{queue_list}\nIf you would like "
         f"the {queue_name} queue to have a different order, choose the <i><b>Reorder"
@@ -128,3 +128,4 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     )
 
     await call.answer()
+

@@ -28,7 +28,7 @@ async def create_queue(user_id, queue_name):
     queue_array = []
     for user_id, name in members.items():
         entry = {
-            "user_id": user_id,
+            "user_id": int(user_id),
             "name": name,
             "current_turn": False,
         }
@@ -48,7 +48,7 @@ async def ask_queue_name(call: types.CallbackQuery):
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
 
-    if str(user_id) != team_id:
+    if user_id != team_id:
         setup_person = await get_setup_person(team_id)
 
         await call.message.answer_sticker(NOPE_STICKER)

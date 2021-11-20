@@ -14,7 +14,8 @@ async def check_user(message: types.Message):
     If he/she does, gets a confirmation from the user to go on with the command.
     Otherwise, calls the `setup_team` function.
     """
-    data = await users.find_one({"user_id": message.from_user.id})
+    user_id = message.from_user.id
+    data = await users.find_one({"user_id": user_id})
 
     if data:
         keyboard = types.InlineKeyboardMarkup()
@@ -32,10 +33,11 @@ async def check_user(message: types.Message):
             reply_markup=keyboard,
         )
     else:
-        await setup_team(message)
+        user_name = message.from_user.full_name
+        await setup_team(user_id, user_name)
 
 
-async def setup_team(message: types.Message):
+async def setup_team(user_id, user_name):
     """
     Adds the user to the users collection and creates a team for the user.
     Generates and sends back an invite link to share with roommates.
@@ -43,9 +45,7 @@ async def setup_team(message: types.Message):
     the bot know that this new user is roommates with the user who sent the
     link.
     """
-    user_name = message.from_user.full_name
-    user_id = message.from_user.id
-    team_id = str(user_id)
+    team_id = user_id
 
     user_data = {
         "name": user_name,
@@ -61,8 +61,9 @@ async def setup_team(message: types.Message):
     queues_data = {"id": team_id, "queues": {}}
     await queues.update_one({"id": team_id}, {"$set": queues_data}, upsert=True)
 
-    link = await get_start_link(payload=team_id, encode=True)
-    await message.reply(
+    link = await get_start_link(payload=str(team_id), encode=True)
+    await dp.bot.send_message(
+        user_id,
         f"Here's your <b>invite link</b>:\n{link}\n\n"
         "You should share it with your roommates.\n"
         "This link will just let me know that people who click on it are "
@@ -71,15 +72,6 @@ async def setup_team(message: types.Message):
         "Once you see that all of your roommates are on the list, you can "
         "proceed with the setup of queues."
     )
-
-
-@dp.callback_query_handler(text="erase_user")
-async def erase_user(call: types.CallbackQuery):
-    """
-    test.
-    """
-    #TODO: delete user from the past team and all old queues.
-    pass
 
 
 @dp.callback_query_handler(text="cancel_setup")

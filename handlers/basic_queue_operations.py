@@ -84,7 +84,7 @@ async def ask_which_q(call: types.CallbackQuery):
     team_id = await get_team_id(user_id)
     operation = call.data
 
-    if operation == "modify" and str(user_id) != team_id:
+    if operation == "modify" and user_id != team_id:
         setup_person = await get_setup_person(team_id)
 
         await call.message.answer_sticker(NOPE_STICKER)

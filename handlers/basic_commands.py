@@ -26,7 +26,7 @@ async def greet(message: types.Message):
 
         user_name = message.from_user.full_name
         user_id = message.from_user.id
-        team_id = payload
+        team_id = int(payload)
 
         user_data = {
             "name": user_name,
@@ -42,7 +42,7 @@ async def greet(message: types.Message):
         setup_person = await get_setup_person(team_id)
         # notify the setup person that someone signed up with invite link
         await dp.bot.send_message(
-            int(team_id), f"{user_name} just signed up with your invite link."
+            team_id, f"{user_name} just signed up with your invite link."
         )
 
         await message.answer(
