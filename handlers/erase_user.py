@@ -1,30 +1,11 @@
 import logging
-from typing import Tuple
 
 from aiogram import types
 
+from handlers.marking import mark_next_person
 from handlers.setup_command import setup_team
 from loader import dp, queues, teams
 from utils.get_db_data import get_team_id, get_current_turn
-
-
-async def mark_next_person(queue_array: list) -> Tuple[list, int]:
-    """
-    Marks next person in the queue (transfers current_turn to the them).
-    Returns the modified queue_array with the id of the person marked.
-    """
-    for index, member in enumerate(queue_array):
-        if member["current_turn"]:
-            queue_array[index]["current_turn"] = False
-
-            # shouldnt fail when next person is at the beginning of the queue
-            next_person_pos = (index + 1) % len(queue_array)
-            queue_array[next_person_pos]["current_turn"] = True
-
-            return (queue_array, queue_array[next_person_pos]["user_id"])
-
-    logging.error("Failed to find next person in the queue")
-    return ([], 0)
 
 
 @dp.callback_query_handler(text="erase_user")
