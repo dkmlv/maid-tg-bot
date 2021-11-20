@@ -4,4 +4,5 @@ from . import marking
 from . import chore_frequency
 from . import basic_queue_operations
 from . import setup_command
+from . import erase_user
 from . import basic_commands
