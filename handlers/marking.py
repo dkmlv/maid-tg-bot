@@ -2,7 +2,9 @@ import logging
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from typing import Tuple
 
+from handlers.chore_frequency import ask_chore_frequency
 from loader import dp, queues
 from states.all_states import QueueSetup
 from utils.get_db_data import get_queue_array, get_team_id, get_queue_list
@@ -43,8 +45,7 @@ async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
 async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     """
     Changes the 'current_turn' status of the selected user to True.
-    Asks if there are any other roommates to select
-    (e.g. for chores that are done in pairs)
+    Additionally asks chore frequency.
     """
     state_data = await state.get_data()
 
@@ -61,33 +62,24 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     queue_data = {f"queues.{queue_name}": queue_array}
     await queues.update_one({"id": team_id}, {"$set": queue_data}, upsert=True)
 
-    keyboard = types.InlineKeyboardMarkup()
+    await ask_chore_frequency(call)
 
-    queue_list = ""
-    for index, member in enumerate(queue_array, start=1):
-        name = member["name"]
-        current_turn = member["current_turn"]
 
-        if current_turn:
-            queue_list += f"<b><i>{index}. {name}</i></b>\n"
-        else:
-            queue_list += f"{index}. {name}\n"
+async def mark_next_person(queue_array: list) -> Tuple[list, int]:
+    """
+    Marks next person in the queue (transfers current_turn to the them).
+    Returns the modified queue_array with the id of the person marked.
+    """
+    for index, member in enumerate(queue_array):
+        if member["current_turn"]:
+            queue_array[index]["current_turn"] = False
 
-        keyboard.add(
-            types.InlineKeyboardButton(
-                text=name,
-                callback_data=f"mark_{index-1}",
-            )
-        )
+            # shouldnt fail when next person is at the beginning of the queue
+            next_person_pos = (index + 1) % len(queue_array)
+            queue_array[next_person_pos]["current_turn"] = True
 
-    keyboard.add(types.InlineKeyboardButton(text="Done", callback_data="marking_done"))
+            return (queue_array, queue_array[next_person_pos]["user_id"])
 
-    await call.message.edit_text(
-        "Awesome, if this chore is usually done by more than one person at a "
-        "time, please select another person whose turn it is to do this chore."
-        f"\n{queue_list}\nOnce you are done, press <i><b>Done</b></i>.",
-        reply_markup=keyboard,
-    )
-
-    await call.answer()
+    logging.error("Failed to find next person in the queue")
+    return ([], 0)
 

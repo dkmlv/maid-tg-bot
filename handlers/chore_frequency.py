@@ -18,7 +18,6 @@ WEEK_DAYS = [
 ]
 
 
-@dp.callback_query_handler(text="marking_done", state=QueueSetup.creating_queue)
 async def ask_chore_frequency(call: types.CallbackQuery):
     """
     Asks the user how often the chore is done.
