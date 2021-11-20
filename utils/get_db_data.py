@@ -4,6 +4,9 @@ The reason behind including these functions is that they were used multiple
 times in the code.
 """
 
+import logging
+from typing import Tuple
+
 from loader import teams, users, queues
 
 
@@ -73,9 +76,23 @@ async def get_setup_person(team_id):
     Returns the name of the person who is doing all the setup in a given team.
     """
     setup_person = await users.find_one(
-        {"user_id": int(team_id)},
+        {"user_id": team_id},
         {"name": 1, "_id": 0},
     )
 
     return setup_person["name"]
+
+
+async def get_current_turn(queue_array) -> Tuple[int, int]:
+    """
+    Get the person whose turn it is to do the chore in a queue.
+    Returns a tuple of form: (user_id, index_position)
+    """
+    for index, member in enumerate(queue_array):
+        if member["current_turn"]:
+            data: Tuple[int, int] = (member["user_id"], index)
+            return data
+
+    logging.error("Current turn person not found.")
+    return (0, 0)
 
