@@ -129,7 +129,7 @@ async def create_custom_q(message: types.Message, state: FSMContext):
             )
             return
 
-        await QueueSetup.creating_queue.set()
+        await QueueSetup.setting_up.set()
 
         await state.update_data(queue_name=queue_name)
 
@@ -176,7 +176,7 @@ async def create_specific_q(call: types.CallbackQuery, state: FSMContext):
         )
         return
 
-    await QueueSetup.creating_queue.set()
+    await QueueSetup.setting_up.set()
 
     await state.update_data(queue_name=queue_name)
 

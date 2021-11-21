@@ -10,7 +10,7 @@ from states.all_states import QueueSetup
 from utils.get_db_data import get_queue_array, get_team_id, get_queue_list
 
 
-@dp.callback_query_handler(text="order_ready", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text="order_ready", state=QueueSetup.setting_up)
 async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
     """
     Asks the user whose turn it is on the list to do the chore.
@@ -41,7 +41,7 @@ async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text_startswith="mark_", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text_startswith="mark_", state=QueueSetup.setting_up)
 async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     """
     Changes the 'current_turn' status of the selected user to True.
@@ -82,4 +82,3 @@ async def mark_next_person(queue_array: list) -> Tuple[list, int]:
 
     logging.error("Failed to find next person in the queue")
     return ([], 0)
-

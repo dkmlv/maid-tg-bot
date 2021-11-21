@@ -36,7 +36,7 @@ async def ask_chore_frequency(call: types.CallbackQuery):
     await call.answer()
 
 
-@dp.callback_query_handler(text="every_day", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text="every_day", state=QueueSetup.setting_up)
 async def set_often_freq(call: types.CallbackQuery, state: FSMContext):
     """
     Adds a job to the APScheduler that will be run every day.
@@ -45,7 +45,7 @@ async def set_often_freq(call: types.CallbackQuery, state: FSMContext):
     await state.finish()
 
 
-@dp.callback_query_handler(text="once", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text="once", state=QueueSetup.setting_up)
 async def ask_which_day(call: types.CallbackQuery):
     """
     Asks the user what day of the week the chore is done.
@@ -68,7 +68,7 @@ async def ask_which_day(call: types.CallbackQuery):
     await call.answer()
 
 
-@dp.callback_query_handler(text=WEEK_DAYS, state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text=WEEK_DAYS, state=QueueSetup.setting_up)
 async def set_once_freq(call: types.CallbackQuery, state: FSMContext):
     """
     Adds a job to the APScheduler that will be run once every week.

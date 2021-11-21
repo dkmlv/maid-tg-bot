@@ -2,4 +2,4 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 
 class QueueSetup(StatesGroup):
     waiting_for_queue_name = State()
-    creating_queue = State()
+    setting_up = State()

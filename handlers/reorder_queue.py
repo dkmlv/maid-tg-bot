@@ -12,7 +12,7 @@ from utils.get_db_data import (
 from utils.sticker_file_ids import CONFUSED_STICKER
 
 
-@dp.callback_query_handler(text="reorder", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text="reorder", state=QueueSetup.setting_up)
 async def ask_to_pick(call: types.CallbackQuery, state: FSMContext):
     """
     First part of reordering the queue.
@@ -44,7 +44,7 @@ async def ask_to_pick(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text_startswith="from_", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text_startswith="from_", state=QueueSetup.setting_up)
 async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
     """
     Second part of reordering the queue.
@@ -77,7 +77,7 @@ async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
     await call.answer()
 
 
-@dp.callback_query_handler(text_startswith="to_", state=QueueSetup.creating_queue)
+@dp.callback_query_handler(text_startswith="to_", state=QueueSetup.setting_up)
 async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     """
     Third & final part of reordering the queue.
