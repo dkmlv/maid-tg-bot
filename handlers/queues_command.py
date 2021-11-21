@@ -43,6 +43,10 @@ async def show_queues(message: types.Message):
                 callback_data="modify",
             ),
             types.InlineKeyboardButton(
+                text="Delete Queue",
+                callback_data="delete",
+            ),
+            types.InlineKeyboardButton(
                 text="Create New Queue",
                 callback_data="create",
             ),
@@ -54,6 +58,7 @@ async def show_queues(message: types.Message):
             "If you'd like me to show a certain queue, please press "
             "<b>Show Queue</b> button below.\nTo modify a queue, please "
             "select the <b>Modify Queue</b> option below.\n"
+            "To delete a queue, press <b>Delete Queue</b>.\n"
             "To set up a new queue, press <b>Create New Queue</b>.",
             reply_markup=keyboard,
         )
@@ -71,7 +76,7 @@ async def show_queues(message: types.Message):
         )
 
 
-@dp.callback_query_handler(text=["show", "modify"])
+@dp.callback_query_handler(text=["show", "modify", "delete"])
 async def ask_which_q(call: types.CallbackQuery):
     """
     Asks the user which queue they'd like to see/modify.
