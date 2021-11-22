@@ -11,12 +11,15 @@ from utils.sticker_file_ids import NOPE_STICKER
 
 
 @dp.message_handler(commands="queues", state="*")
-async def show_queues(message: types.Message):
+@dp.callback_query_handler(text="back")
+async def show_queues(entity):
     """
     Shows all the chore queues the user has along with some options on what can
-    be done with them.
+    be done with them. Accepts 'entity', which can either be a CallbackQuery or a Message.
+    It is a CallbackQuery when user clicks the Back button in the queues
+    dialogue and is a Message when the 'queues' command is issued.
     """
-    team_id = await get_team_id(message.from_user.id)
+    team_id = await get_team_id(entity.from_user.id)
 
     queues_data = await queues.find_one(
         {"id": team_id},
@@ -53,14 +56,13 @@ async def show_queues(message: types.Message):
         ]
         keyboard.add(*buttons)
 
-        await message.reply(
+        text = (
             f"<b>Here are all the queues you have set up:</b>\n{queues_list}\n"
             "If you'd like me to show a certain queue, please press "
             "<b>Show Queue</b> button below.\nTo modify a queue, please "
             "select the <b>Modify Queue</b> option below.\n"
             "To delete a queue, press <b>Delete Queue</b>.\n"
-            "To set up a new queue, press <b>Create New Queue</b>.",
-            reply_markup=keyboard,
+            "To set up a new queue, press <b>Create New Queue</b>."
         )
     else:
         keyboard = types.InlineKeyboardMarkup()
@@ -68,12 +70,17 @@ async def show_queues(message: types.Message):
             types.InlineKeyboardButton(text="Create New Queue", callback_data="create")
         )
 
-        await message.reply(
+        text = (
             "Looks like you have no queues set up right now.\n"
             "Don't worry though, you can easily set them up by pressing the "
-            "<b>Create New Queue</b> button below.",
-            reply_markup=keyboard,
+            "<b>Create New Queue</b> button below."
         )
+
+    if type(entity) == types.CallbackQuery:
+        await entity.message.edit_text(text, reply_markup=keyboard)
+        await entity.answer()
+    else:
+        await entity.reply(text, reply_markup=keyboard)
 
 
 @dp.callback_query_handler(text=["show", "modify", "delete"])
@@ -117,6 +124,7 @@ async def ask_which_q(call: types.CallbackQuery):
         keyboard = types.InlineKeyboardMarkup(row_width=2)
 
         keyboard.add(*buttons)
+        keyboard.add(types.InlineKeyboardButton(text="Back", callback_data="back"))
 
         await call.message.edit_text(
             f"<b>Please select the queue you'd like me to {operation}.</b>"

@@ -22,8 +22,6 @@ async def ask_chore_frequency(call: types.CallbackQuery):
     """
     Asks the user how often the chore is done.
     """
-    await call.message.delete_reply_markup()
-
     keyboard = types.InlineKeyboardMarkup()
 
     buttons = [
@@ -32,7 +30,10 @@ async def ask_chore_frequency(call: types.CallbackQuery):
     ]
     keyboard.add(*buttons)
 
-    await call.message.answer("How often is this chore done?", reply_markup=keyboard)
+    await call.message.edit_text(
+        "How often is this chore done?",
+        reply_markup=keyboard,
+    )
     await call.answer()
 
 
@@ -41,6 +42,7 @@ async def set_often_freq(call: types.CallbackQuery, state: FSMContext):
     """
     Adds a job to the APScheduler that will be run every day.
     """
+    await call.message.delete_reply_markup()
     await call.answer()
     await state.finish()
 
@@ -73,6 +75,6 @@ async def set_once_freq(call: types.CallbackQuery, state: FSMContext):
     """
     Adds a job to the APScheduler that will be run once every week.
     """
+    await call.message.delete_reply_markup()
     await call.answer()
     await state.finish()
-

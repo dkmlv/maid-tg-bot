@@ -45,6 +45,8 @@ async def ask_queue_name(call: types.CallbackQuery):
     """
     Asks the user to pick a queue name.
     """
+    await call.message.delete_reply_markup()
+
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
 
@@ -77,7 +79,7 @@ async def ask_queue_name(call: types.CallbackQuery):
 
         keyboard.add(*buttons)
 
-        await call.message.edit_text(
+        await call.message.answer(
             "Awesome, you can choose to make a queue for one of the following or "
             "create a custom queue by picking one of the options below.",
             reply_markup=keyboard,
@@ -201,4 +203,3 @@ async def create_specific_q(call: types.CallbackQuery, state: FSMContext):
     )
 
     await call.answer()
-
