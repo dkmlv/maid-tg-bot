@@ -4,7 +4,7 @@ from aiogram import types
 from aiogram.utils.deep_linking import decode_payload
 
 from loader import dp, teams, users
-from utils.get_db_data import get_setup_person, get_team_members
+from utils.get_db_data import get_setup_person, get_team_members, get_team_id
 from utils.sticker_file_ids import (
     HI_STICKER,
     HERE_STICKER,
@@ -70,13 +70,30 @@ async def provide_list(message: types.Message):
     """
     Provides the list of roommates that the user has.
     """
-    members = await get_team_members(message.from_user.id)
+    user_id = message.from_user.id
+    team_id = await get_team_id(user_id)
+    members = await get_team_members(user_id)
+
+    if user_id == team_id:
+        # user issuing the command is admin (the setup person)
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(
+            types.InlineKeyboardButton(
+                text="Remove User",
+                callback_data="ask_which_user",
+            )
+        )
+    else:
+        keyboard = None
 
     mates_list = ""
     for index, name in enumerate(members.values(), start=1):
         mates_list += f"{index}. {name}\n"
 
-    await message.reply("<b>Here is your list of roommates:</b>\n" + mates_list)
+    await message.reply(
+        "<b>Here is your list of roommates:</b>\n" + mates_list,
+        reply_markup=keyboard,
+    )
 
     await message.answer_sticker(HERE_STICKER)
 
