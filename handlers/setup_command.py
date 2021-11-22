@@ -3,6 +3,7 @@ import logging
 from aiogram import types
 from aiogram.utils.deep_linking import get_start_link
 
+from handlers.send_invite_link import send_invite_link
 from loader import dp, queues, teams, users
 from utils.sticker_file_ids import CHARISMATIC_STICKER
 
@@ -15,12 +16,16 @@ async def check_user(message: types.Message):
     Otherwise, calls the `setup_team` function.
     """
     user_id = message.from_user.id
+    user_name = message.from_user.full_name
+
     data = await users.find_one({"user_id": user_id})
 
     if data:
         keyboard = types.InlineKeyboardMarkup()
         buttons = [
-            types.InlineKeyboardButton(text="Yes", callback_data="erase_user"),
+            types.InlineKeyboardButton(
+                text="Yes", callback_data=f"erase_{user_id}_{user_name}"
+            ),
             types.InlineKeyboardButton(text="No", callback_data="cancel_setup"),
         ]
         keyboard.add(*buttons)
@@ -35,6 +40,7 @@ async def check_user(message: types.Message):
     else:
         user_name = message.from_user.full_name
         await setup_team(user_id, user_name)
+        await send_invite_link(message)
 
 
 async def setup_team(user_id, user_name):
@@ -61,18 +67,6 @@ async def setup_team(user_id, user_name):
     queues_data = {"id": team_id, "queues": {}}
     await queues.update_one({"id": team_id}, {"$set": queues_data}, upsert=True)
 
-    link = await get_start_link(payload=str(team_id), encode=True)
-    await dp.bot.send_message(
-        user_id,
-        f"Here's your <b>invite link</b>:\n{link}\n\n"
-        "You should share it with your roommates.\n"
-        "This link will just let me know that people who click on it are "
-        "your roommates and you will be able to see them on the list using "
-        "the <b>/list</b> command.\n\n"
-        "Once you see that all of your roommates are on the list, you can "
-        "proceed with the setup of queues."
-    )
-
 
 @dp.callback_query_handler(text="cancel_setup")
 async def cancel_setup(call: types.CallbackQuery):
@@ -86,4 +80,3 @@ async def cancel_setup(call: types.CallbackQuery):
         "Operation cancelled. You can keep on knocking out those chores with "
         "your roommates."
     )
-
