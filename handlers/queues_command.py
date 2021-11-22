@@ -85,16 +85,16 @@ async def ask_which_q(call: types.CallbackQuery):
     team_id = await get_team_id(user_id)
     operation = call.data
 
-    if operation == "modify" and user_id != team_id:
+    if (operation == "modify" or operation == "delete") and user_id != team_id:
         setup_person = await get_setup_person(team_id)
 
         await call.message.answer_sticker(NOPE_STICKER)
 
         await call.message.answer(
-            "Sorry, you do not have permission to modify queues.\nAs part of a "
-            "security measure, only the person who did the initial setup has "
-            "permission to modify/create queues.\nIn your list of roommates, "
-            f"that person is {setup_person}."
+            f"Sorry, you do not have permission to {operation} queues.\nAs "
+            "part of a security measure, only the person who did the initial "
+            "setup has permission to modify/create queues.\nIn your list of "
+            f"roommates, that person is {setup_person}."
         )
     else:
         queues_data = await queues.find_one(
@@ -125,4 +125,3 @@ async def ask_which_q(call: types.CallbackQuery):
         )
 
     await call.answer()
-

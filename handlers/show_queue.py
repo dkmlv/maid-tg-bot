@@ -8,6 +8,7 @@ from utils.get_db_data import (
     get_queue_list,
     get_team_id,
 )
+from utils.sticker_file_ids import HERE_STICKER
 
 
 @dp.callback_query_handler(text_startswith="show_")
@@ -23,5 +24,6 @@ async def show_a_queue(call: types.CallbackQuery):
     queue_list = await get_queue_list(queue_array)
 
     await call.message.answer(f"Here is your <b>{queue_type}</b> queue:\n{queue_list}")
+    await call.message.answer_sticker(HERE_STICKER)
 
-
+    await call.answer()

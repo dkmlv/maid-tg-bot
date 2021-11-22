@@ -99,4 +99,3 @@ async def another_help_message(message: types.Message):
     """
     await message.answer_sticker(QUESTION_STICKER)
     await message.reply("See <b>/help</b> for more information.")
-

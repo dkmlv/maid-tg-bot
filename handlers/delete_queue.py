@@ -22,4 +22,3 @@ async def delete_a_queue(call: types.CallbackQuery):
     await call.message.delete_reply_markup()
     await call.message.edit_text(f"<b>{queue_name}</b> queue deleted.")
     await call.answer()
-
