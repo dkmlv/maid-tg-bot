@@ -8,6 +8,7 @@ from utils.get_db_data import get_setup_person, get_team_members, get_team_id
 from utils.sticker_file_ids import (
     HI_STICKER,
     HERE_STICKER,
+    HUMBLE_STICKER,
     QUESTION_STICKER,
 )
 
@@ -108,10 +109,20 @@ async def give_help(message: types.Message):
     )
 
 
+@dp.message_handler(regexp='(thank you|ty)', state=None)
+async def react_to_thanks(message: types.Message):
+    """
+    This function will be called when the user types a random message.
+    """
+    user_name = message.from_user.first_name
+
+    await message.answer_sticker(HUMBLE_STICKER)
+    await message.reply(f"No need, I'm just doing my job, {user_name}-san.")
+
+
 @dp.message_handler(state=None)
 async def another_help_message(message: types.Message):
     """
-    Will ask the user to type help to get more info.
     This function will be called when the user types a random message.
     """
     await message.answer_sticker(QUESTION_STICKER)
