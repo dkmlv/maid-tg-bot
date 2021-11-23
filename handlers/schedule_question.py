@@ -16,9 +16,7 @@ async def send_question(team_id, queue_name):
     (the 'can you do this chore today?' question).
     """
     queue_array = await get_queue_array(team_id, queue_name)
-    current_turn_data = await get_current_turn(queue_array)
-    user_id = current_turn_data[0]
-    user_name = current_turn_data[1]
+    user_id, user_name, _ = await get_current_turn(queue_array)
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [

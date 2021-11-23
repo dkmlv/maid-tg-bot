@@ -64,15 +64,14 @@ async def erase_user(call: types.CallbackQuery):
     for queue_name in queue_data:
         queue_array = queue_data[queue_name]
 
-        current_turn_data = await get_current_turn(queue_array)
-        current_turn_id = current_turn_data[0]
-        current_turn_pos = current_turn_data[-1]
+        # ct - current turn
+        ct_id, _, ct_pos = await get_current_turn(queue_array)
 
         # user being erased has their current_turn True
-        if user_id == current_turn_id:
+        if user_id == ct_id:
             queue_array, next_id = await mark_next_person(queue_array)
 
-            del queue_array[current_turn_pos]
+            del queue_array[ct_pos]
 
             # message user that its their turn now
             await dp.bot.send_message(
