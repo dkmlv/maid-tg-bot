@@ -20,7 +20,7 @@ async def send_question(team_id, queue_name):
 
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton(text="Yes", callback_data="schedule_next"),
+        types.InlineKeyboardButton(text="Yes", callback_data=f"transfer_{queue_name}"),
         types.InlineKeyboardButton(text="No", callback_data="FUCK"),
     ]
     keyboard.add(*buttons)

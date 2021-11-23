@@ -4,3 +4,6 @@ class QueueSetup(StatesGroup):
     waiting_for_queue_name = State()
     waiting_for_time = State()
     setting_up = State()
+
+class TrackingQueue(StatesGroup):
+    waiting_for_reason = State()
