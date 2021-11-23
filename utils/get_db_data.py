@@ -83,16 +83,15 @@ async def get_setup_person(team_id):
     return setup_person["name"]
 
 
-async def get_current_turn(queue_array) -> Tuple[int, int]:
+async def get_current_turn(queue_array) -> Tuple[int, str, int]:
     """
     Get the person whose turn it is to do the chore in a queue.
-    Returns a tuple of form: (user_id, index_position)
+    Returns a tuple of form: (user_id, user_name, index_position)
     """
     for index, member in enumerate(queue_array):
         if member["current_turn"]:
-            data: Tuple[int, int] = (member["user_id"], index)
+            data: Tuple[int, str, int] = (member["user_id"], member["name"], index)
             return data
 
     logging.error("Current turn person not found.")
-    return (0, 0)
-
+    return (0, "", 0)
