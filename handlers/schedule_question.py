@@ -8,6 +8,7 @@ from aiogram.utils import exceptions
 from loader import dp, sched
 from states.all_states import QueueSetup
 from utils.get_db_data import get_current_turn, get_team_id, get_queue_array
+from utils.sticker_file_ids import CHARISMATIC_STICKER
 
 
 async def send_question(team_id, queue_name):
@@ -21,7 +22,7 @@ async def send_question(team_id, queue_name):
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
         types.InlineKeyboardButton(text="Yes", callback_data=f"transfer_{queue_name}"),
-        types.InlineKeyboardButton(text="No", callback_data="FUCK"),
+        types.InlineKeyboardButton(text="No", callback_data=f"ask_why_{queue_name}"),
     ]
     keyboard.add(*buttons)
 
@@ -76,5 +77,8 @@ async def schedule_question(message: types.Message, state: FSMContext):
         minute=minute,
         replace_existing=True,
     )
+
+    await message.answer_sticker(CHARISMATIC_STICKER)
+    await message.answer("Great, I'll try my best to keep track of this queue.")
 
     await state.finish()

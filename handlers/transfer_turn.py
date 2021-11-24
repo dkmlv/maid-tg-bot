@@ -35,7 +35,7 @@ async def transfer_turn(call: types.CallbackQuery):
     Transfers current_turn to the next user in the queue.
     Just calls the mark_next_person func and updates the db with new queue.
     """
-    await call.message.delete_reply_markup()
+    await call.message.delete()
 
     team_id = await get_team_id(call.from_user.id)
     queue_name = call.data.split("_")[1]
