@@ -22,7 +22,7 @@ async def greet(message: types.Message):
 
     await message.answer_sticker(HI_STICKER)
 
-    if args:
+    if args and message.chat.type == "private":
         payload = decode_payload(args)
 
         user_name = message.from_user.full_name
@@ -57,6 +57,13 @@ async def greet(message: types.Message):
         await message.answer(
             f"P.S. Maybe thank {setup_person}, because they are willing to do "
             "the whole setup and everyone appreciates a sincere 'thank you'."
+        )
+    elif message.chat.type in ("group", "supergroup"):
+        await message.answer(
+            "Hi everyone!\nMy name is Tohru and I will try me best to make your "
+            "lives a bit easier. Whenever there is a problem with a queue, I "
+            "will let you know here so that we can figure out a solution "
+            "together.\nI'm very excited about working with you all.",
         )
     else:
         await message.answer(
@@ -109,7 +116,7 @@ async def give_help(message: types.Message):
     )
 
 
-@dp.message_handler(regexp='(thank you|ty)', state=None)
+@dp.message_handler(regexp="(thank you|ty)", state=None)
 async def react_to_thanks(message: types.Message):
     """
     This function will be called when the user types a random message.

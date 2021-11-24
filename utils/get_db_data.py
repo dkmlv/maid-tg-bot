@@ -39,6 +39,25 @@ async def get_team_members(user_id):
     return members
 
 
+async def get_team_chat(user_id):
+    """
+    Returns the team's Telegram group chat id.
+    If it fails to find it, returns None
+    """
+    team_id = await get_team_id(user_id)
+    team_data = await teams.find_one(
+        {"id": team_id},
+        {"group_chat_id": 1, "_id": 0},
+    )
+
+    try:
+        group_chat_id = team_data["group_chat_id"]
+    except KeyError:
+        group_chat_id = None
+
+    return group_chat_id
+
+
 async def get_queue_array(team_id, queue_name):
     """
     Returns the queue array for a particular queue for a specific team id.
