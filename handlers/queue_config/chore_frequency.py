@@ -1,3 +1,9 @@
+"""
+This module is sort of the last step in the queue setup process.
+Deals with asking the user how often a chore is done and when the
+question should be sent.
+"""
+
 import logging
 
 from aiogram import types

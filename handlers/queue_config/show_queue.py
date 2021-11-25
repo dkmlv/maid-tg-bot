@@ -1,3 +1,11 @@
+"""
+Show the queue to the user in form of a list with the current turn
+person highlighted.
+This, unlike every other option in the /queues inline keyboard, is
+available for all users, not just the admin.
+"""
+
+
 import logging
 
 from aiogram import types

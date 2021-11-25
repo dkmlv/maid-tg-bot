@@ -1,3 +1,8 @@
+"""
+This code will trigger when user indicates that they can do the chore.
+Bot just transfers 'current_turn' to the next person in the queue.
+"""
+
 import logging
 
 from aiogram import types

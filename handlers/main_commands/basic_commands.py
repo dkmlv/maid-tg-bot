@@ -1,3 +1,8 @@
+"""
+Handlers for some basic commands including: /start, /list, /help.
+Plus handlers for when user types in 'thank you' or a random message.
+"""
+
 import logging
 
 from aiogram import types

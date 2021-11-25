@@ -1,3 +1,8 @@
+"""
+Handler for the /queues command and some of the options in the Inline
+Keyboard: show, delete, modify.
+"""
+
 import logging
 
 from aiogram import types

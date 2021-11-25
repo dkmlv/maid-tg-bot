@@ -1,3 +1,10 @@
+"""
+A queue is created using the code in this file.
+Users can pick to create a queue with built-in names (Cooking, Shopping, etc)
+or they can create their own custom queues with whatever names they want.
+NOTE: creating a queue is only possible for the admin (aka setup person)
+"""
+
 import logging
 
 from aiogram import types

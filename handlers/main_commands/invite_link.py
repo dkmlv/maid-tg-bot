@@ -1,3 +1,7 @@
+"""
+Only responsibility - generate the invite link and send it back.
+"""
+
 import logging
 
 from aiogram import types

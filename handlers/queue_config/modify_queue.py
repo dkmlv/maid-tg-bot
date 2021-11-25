@@ -1,3 +1,8 @@
+"""
+Modifying a queue.
+This option is also available only to the admin (aka setup person)
+"""
+
 import logging
 
 from aiogram import types

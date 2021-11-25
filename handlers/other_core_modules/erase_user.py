@@ -1,3 +1,7 @@
+"""
+Deleting any user other than the admin (aka setup person).
+"""
+
 import logging
 
 from aiogram import types
@@ -18,7 +22,7 @@ async def ask_who_to_delete(call: types.CallbackQuery):
     buttons = []
     for member_id, member_name in members.items():
         # admin (setup person) wont be able to delete themselves this way
-        # (they can still delete themselves using /setup repeatedly)
+        # (they can still delete themselves using /setup)
         if int(member_id) == call.from_user.id:
             continue
 

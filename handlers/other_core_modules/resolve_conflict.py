@@ -1,3 +1,10 @@
+"""
+Resolving a conflict that arises when someone doesn't have time to do
+their chore on a given day. Informs the group why that person can't do
+it and asks if anyone can do the chore instead. If no one replies, bot
+skips chore for that day and proceeds as usual next time.
+"""
+
 import datetime as dt
 import logging
 

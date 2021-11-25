@@ -1,3 +1,9 @@
+"""
+Deals with Telegram group related stuff:
+    1. Ask to add bot to group
+    2. Detect when bot is added to group
+"""
+
 import logging
 
 from aiogram import types

@@ -1,3 +1,8 @@
+"""
+Deleting the queue from the db and removing scheduled job.
+This option is only available to admin (aka setup person)
+"""
+
 import logging
 
 from aiogram import types

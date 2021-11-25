@@ -1,3 +1,7 @@
+"""
+Handling the /setup command here. Shocking.
+"""
+
 import logging
 
 from aiogram import types
@@ -47,10 +51,6 @@ async def check_user(message: types.Message):
 async def setup_team(user_id, user_name):
     """
     Adds the user to the users collection and creates a team for the user.
-    Generates and sends back an invite link to share with roommates.
-    The link is generated using the user's telegram id and will be used to let
-    the bot know that this new user is roommates with the user who sent the
-    link.
     """
     team_id = user_id
 

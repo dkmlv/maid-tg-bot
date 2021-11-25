@@ -1,3 +1,7 @@
+"""
+Reordering users' position in a given queue.
+"""
+
 import logging
 
 from aiogram import types

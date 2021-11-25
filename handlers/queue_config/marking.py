@@ -1,3 +1,8 @@
+"""
+Indicating whose turn it is in the queue to do the chore.
+Bot simply sets current_turn variable for the user to be True.
+"""
+
 import logging
 
 from aiogram import types
