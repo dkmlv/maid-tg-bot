@@ -1,3 +1,10 @@
+"""
+The actual last part of the queue setup process.
+Scheduling 'the question' to the person whose turn it is in a queue.
+It's really just the bot asking whether they can do the chore that day.
+Also serves as a reminder that it's their turn in a queue.
+"""
+
 import asyncio
 import logging
 
@@ -51,7 +58,7 @@ async def send_question(team_id, queue_name):
         logging.info(f"Target [ID:{user_id}]: success, question sent.")
 
 
-@dp.message_handler(regexp=r"[0-2]\d:[0-5]\d", state=QueueSetup.waiting_for_time)
+@dp.message_handler(regexp=r"[0-2]?\d:[0-5]\d", state=QueueSetup.waiting_for_time)
 async def schedule_question(message: types.Message, state: FSMContext):
     """
     Schedules the question to be sent to the current turn user
@@ -59,8 +66,9 @@ async def schedule_question(message: types.Message, state: FSMContext):
     """
     team_id = await get_team_id(message.from_user.id)
 
-    hour = int(message.text[:2])
-    minute = int(message.text[-2:])
+    time = message.text.split(":")
+    hour = int(time[0])
+    minute = int(time[1])
 
     state_data = await state.get_data()
     queue_name = state_data["queue_name"]
