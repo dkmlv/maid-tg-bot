@@ -1,14 +1,24 @@
-import logging
 import datetime as dt
+import logging
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from loader import dp, queues, sched
 from states.all_states import TrackingQueue
-from utils.get_db_data import get_team_chat, get_team_id
-from utils.sticker_file_ids import SAD_STICKER, WHATEVER_STICKER
-
+from utils.get_db_data import (
+    get_current_turn,
+    get_queue_array,
+    get_team_chat,
+    get_team_id,
+)
+from utils.sticker_file_ids import (
+    CONFUSED_STICKER,
+    NOPE_STICKER,
+    SAD_STICKER,
+    WHATEVER_STICKER,
+    YAY_STICKER,
+)
 
 HOURS = 5
 
@@ -74,7 +84,12 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
     team_id = await get_team_id(message.from_user.id)
 
     if not group_chat_id:
-        print("FUCK")
+        await message.answer(
+            "Looks like you don't have a group chat.\nPlease create a group (if "
+            "you don't already have one) and add me there, so that we can "
+            "solve this problem. Once I'm added to the group, send me the "
+            "reason again."
+        )
         return
 
     state_data = await state.get_data()
@@ -94,7 +109,9 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
 
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(
-        types.InlineKeyboardButton(text="I can do it.", callback_data="swap_users")
+        types.InlineKeyboardButton(
+            text="I can do it.", callback_data=f"swap_{queue_name}_{team_id}"
+        )
     )
 
     await message.answer(
@@ -110,3 +127,64 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
     )
 
     await state.finish()
+
+
+@dp.callback_query_handler(text_startswith="swap_")
+async def swap_users(call: types.CallbackQuery):
+    """
+    Swaps two users in the queue.
+    """
+    # data passed in will be in the form of "swap_qname_-123456789"
+    data = call.data.split("_")
+    queue_name = data[1]
+    team_id = int(data[-1])
+    user_name = call.from_user.first_name
+
+    q_array = await get_queue_array(team_id, queue_name)
+
+    # ct - current_turn
+    _, ct_name, ct_pos = await get_current_turn(q_array)
+
+    user_pos = None
+    for index, member in enumerate(q_array):
+        if member["user_id"] == call.from_user.id:
+            user_pos = index
+
+    if type(user_pos) != int:
+        # person who replied is not in the roommates group in the db
+        await call.message.answer_sticker(NOPE_STICKER)
+        await call.message.answer(
+            "You are not a part of the roommates group, you should get in touch"
+            " with others and get the <b>invite link</b>."
+        )
+        return
+    elif ct_pos == user_pos:
+        # the person who said they cant do the chore clicked 'Yes, I can do it'
+        await call.message.answer_sticker(CONFUSED_STICKER)
+        await call.message.answer(
+            f"I'm sorry, but you can't swap with yourself, {user_name}-san."
+        )
+        return
+
+    # reassigning current_turn
+    q_array[ct_pos]["current_turn"], q_array[user_pos]["current_turn"] = False, True
+    # swapping positions in the queue
+    q_array[ct_pos], q_array[user_pos] = q_array[user_pos], q_array[ct_pos]
+
+    new_data = {f"queues.{queue_name}": q_array}
+    await queues.update_one({"id": team_id}, {"$set": new_data}, upsert=True)
+
+    logging.info("Swapped two users successfully")
+
+    sched.remove_job(job_id=f"resolving_{queue_name}_{team_id}", jobstore="mongo")
+
+    await call.message.delete_reply_markup()
+    await call.message.answer_sticker(YAY_STICKER)
+    await call.message.answer(
+        f"Yaaay, thank you, {user_name}! You have swapped places with {ct_name}."
+        f" {ct_name} will now do the chore when it's your turn.\nYou can check "
+        f"out the new order in the {queue_name} queue, by typing <b>/queues</b> "
+        "and then clicking on <b>Show Queue</b>."
+    )
+
+    await call.answer()
