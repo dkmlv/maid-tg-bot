@@ -110,7 +110,7 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
         trigger="date",
         run_date=later_time,
         jobstore="mongo",
-        id=f"resolving_{queue_name}_{team_id}",
+        id=f"resolving_{queue_name}_{group_chat_id}",
         replace_existing=True,
     )
 

@@ -15,7 +15,7 @@ from utils.get_db_data import get_team_id, get_team_members, get_current_turn
 @dp.callback_query_handler(text="ask_which_user")
 async def ask_who_to_delete(call: types.CallbackQuery):
     """
-    Asks the user whose turn it is on the list to do the chore.
+    Asks to select a roommate to remove from the team.
     """
     members = await get_team_members(call.from_user.id)
 

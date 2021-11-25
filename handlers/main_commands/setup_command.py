@@ -25,11 +25,18 @@ async def check_user(message: types.Message):
     data = await users.find_one({"user_id": user_id})
 
     if data:
+        team_id = data.get("team_id")
+
+        if user_id == team_id:
+            # deleting the admin is a bit of a different operation
+            # since almost everything relies on admin's user id
+            callback_data = "ask_who_to_make_admin"
+        else:
+            callback_data = f"erase_{user_id}_{user_name}"
+
         keyboard = types.InlineKeyboardMarkup()
         buttons = [
-            types.InlineKeyboardButton(
-                text="Yes", callback_data=f"erase_{user_id}_{user_name}"
-            ),
+            types.InlineKeyboardButton(text="Yes", callback_data=callback_data),
             types.InlineKeyboardButton(text="No", callback_data="cancel_setup"),
         ]
         keyboard.add(*buttons)
