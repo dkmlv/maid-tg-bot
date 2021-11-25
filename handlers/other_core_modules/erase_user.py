@@ -2,8 +2,8 @@ import logging
 
 from aiogram import types
 
-from handlers.marking import mark_next_person
-from handlers.setup_command import setup_team
+from .transfer_turn import mark_next_person
+from ..main_commands.setup_command import setup_team
 from loader import dp, queues, teams
 from utils.get_db_data import get_team_id, get_team_members, get_current_turn
 

@@ -2,12 +2,11 @@ import logging
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from typing import Tuple
 
-from handlers.chore_frequency import ask_chore_frequency
+from .chore_frequency import ask_chore_frequency
 from loader import dp, queues
 from states.all_states import QueueSetup
-from utils.get_db_data import get_queue_array, get_team_id, get_queue_list
+from utils.get_db_data import get_team_id
 
 
 @dp.callback_query_handler(text="order_ready", state=QueueSetup.setting_up)
@@ -63,22 +62,3 @@ async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
     await queues.update_one({"id": team_id}, {"$set": queue_data}, upsert=True)
 
     await ask_chore_frequency(call)
-
-
-async def mark_next_person(queue_array: list) -> Tuple[list, int]:
-    """
-    Marks next person in the queue (transfers current_turn to the them).
-    Returns the modified queue_array with the id of the person marked.
-    """
-    for index, member in enumerate(queue_array):
-        if member["current_turn"]:
-            queue_array[index]["current_turn"] = False
-
-            # shouldnt fail when next person is at the beginning of the queue
-            next_person_pos = (index + 1) % len(queue_array)
-            queue_array[next_person_pos]["current_turn"] = True
-
-            return (queue_array, queue_array[next_person_pos]["user_id"])
-
-    logging.error("Failed to find next person in the queue")
-    return ([], 0)

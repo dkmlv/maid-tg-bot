@@ -4,12 +4,7 @@ from aiogram import types
 from aiogram.utils.deep_linking import get_startgroup_link
 
 from loader import dp, teams
-from utils.get_db_data import get_team_id, get_team_chat
-
-
-@dp.message_handler(commands="test")
-async def test(message: types.Message):
-    return await get_team_chat(message.from_user.id)
+from utils.get_db_data import get_team_id
 
 
 async def ask_to_add_to_group(user_id):
@@ -41,6 +36,7 @@ async def group_chat(my_chat_member: types.ChatMemberUpdated):
     bot_added = my_chat_member.new_chat_member.is_chat_member()
 
     user_id = my_chat_member.from_user.id
+    user_name = my_chat_member.from_user.first_name
     team_id = await get_team_id(user_id)
 
     if bot_added:
@@ -57,4 +53,8 @@ async def group_chat(my_chat_member: types.ChatMemberUpdated):
             {"$unset": {"group_chat_id": ""}},
             upsert=True,
         )
-        await dp.bot.send_message(team_id, "Why did you do this to me, Anakin?")
+        await dp.bot.send_message(
+            user_id,
+            f"Why did you do this to me, {user_name}?\nWhy did you remove me "
+            "from the group?"
+        )

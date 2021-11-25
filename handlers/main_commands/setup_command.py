@@ -1,10 +1,9 @@
 import logging
 
 from aiogram import types
-from aiogram.utils.deep_linking import get_start_link
 
-from handlers.group_stuff import ask_to_add_to_group
-from handlers.send_invite_link import send_invite_link
+from .group_stuff import ask_to_add_to_group
+from .invite_link import send_invite_link
 from loader import dp, queues, teams, users
 from utils.sticker_file_ids import CHARISMATIC_STICKER
 

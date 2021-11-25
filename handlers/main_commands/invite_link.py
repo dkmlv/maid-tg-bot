@@ -3,7 +3,7 @@ import logging
 from aiogram import types
 from aiogram.utils.deep_linking import get_start_link
 
-from loader import dp, queues, teams, users
+from loader import dp
 from utils.get_db_data import get_team_id
 
 
