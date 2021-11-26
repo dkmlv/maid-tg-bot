@@ -10,6 +10,7 @@ import logging
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
+from apscheduler.jobstores.base import JobLookupError
 
 from loader import dp, queues, sched
 from states.all_states import TrackingQueue
@@ -27,7 +28,7 @@ from utils.sticker_file_ids import (
     YAY_STICKER,
 )
 
-HOURS = 5
+HOURS = 2
 
 
 async def get_later_time():
@@ -146,6 +147,7 @@ async def swap_users(call: types.CallbackQuery):
     queue_name = data[1]
     team_id = int(data[-1])
     user_name = call.from_user.first_name
+    group_chat_id = await get_team_chat(call.from_user.id)
 
     q_array = await get_queue_array(team_id, queue_name)
 
@@ -183,7 +185,13 @@ async def swap_users(call: types.CallbackQuery):
 
     logging.info("Swapped two users successfully")
 
-    sched.remove_job(job_id=f"resolving_{queue_name}_{team_id}", jobstore="mongo")
+    try:
+        sched.remove_job(
+            job_id=f"resolving_{queue_name}_{group_chat_id}",
+            jobstore="mongo",
+        )
+    except JobLookupError:
+        logging.info("Someone pressed I can do it after the time limit.")
 
     await call.message.delete_reply_markup()
     await call.message.answer_sticker(YAY_STICKER)

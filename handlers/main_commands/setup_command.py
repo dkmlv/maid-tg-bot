@@ -10,6 +10,7 @@ from .group_stuff import ask_to_add_to_group
 from .invite_link import send_invite_link
 from loader import dp, queues, teams, users
 from utils.sticker_file_ids import CHARISMATIC_STICKER
+from utils.get_db_data import get_team_members
 
 
 @dp.message_handler(commands="setup", state="*")
@@ -26,8 +27,9 @@ async def check_user(message: types.Message):
 
     if data:
         team_id = data.get("team_id")
+        num_of_members = len(await get_team_members(user_id))
 
-        if user_id == team_id:
+        if user_id == team_id and num_of_members != 1:
             # deleting the admin is a bit of a different operation
             # since almost everything relies on admin's user id
             callback_data = "ask_who_to_make_admin"
@@ -69,7 +71,11 @@ async def setup_team(user_id, user_name):
 
     await users.update_one({"user_id": user_id}, {"$set": user_data}, upsert=True)
 
-    team_data = {"id": team_id, "members": {str(user_id): user_name}}
+    team_data = {
+        "id": team_id,
+        "members": {str(user_id): user_name},
+        "group_chat_id": "",
+    }
     await teams.update_one({"id": team_id}, {"$set": team_data}, upsert=True)
 
     queues_data = {"id": team_id, "queues": {}}

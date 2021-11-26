@@ -8,7 +8,7 @@ from aiogram import types
 
 from .transfer_turn import mark_next_person
 from ..main_commands.setup_command import setup_team
-from loader import dp, queues, teams
+from loader import dp, queues, sched, teams
 from utils.get_db_data import get_team_id, get_team_members, get_current_turn
 
 
@@ -56,40 +56,56 @@ async def erase_user(call: types.CallbackQuery):
 
     # erasing user from old team
     team_id = await get_team_id(user_id)
-    await teams.update_one(
-        {"id": team_id},
-        {"$unset": {f"members.{user_id}": ""}},
-    )
 
-    # erasing user from old queues
-    queue_data = await queues.find_one({"id": team_id}, {"queues": 1, "_id": 0})
-    queue_data = queue_data["queues"]
+    if user_id == team_id:
+        # handling case when admin is the only user left in the team
+        jobs = sched.get_jobs(jobstore="mongo")
+        for job in jobs:
+            if job.id.endswith(str(user_id)):
+                sched.remove_job(job_id=job.id, jobstore="mongo")
+    else:
+        # normal user wants to delete themselves
+        await teams.update_one(
+            {"id": team_id},
+            {"$unset": {f"members.{user_id}": ""}},
+        )
 
-    for queue_name in queue_data:
-        queue_array = queue_data[queue_name]
+        # erasing user from old queues
+        queue_data = await queues.find_one(
+            {"id": team_id},
+            {"queues": 1, "_id": 0},
+        )
+        queue_data = queue_data["queues"]
 
-        # ct - current turn
-        ct_id, _, ct_pos = await get_current_turn(queue_array)
+        for queue_name in queue_data:
+            queue_array = queue_data[queue_name]
 
-        # user being erased has their current_turn True
-        if user_id == ct_id:
-            queue_array, next_id = await mark_next_person(queue_array)
+            # ct - current turn
+            ct_id, _, ct_pos = await get_current_turn(queue_array)
 
-            del queue_array[ct_pos]
+            # user being erased has their current_turn True
+            if user_id == ct_id:
+                queue_array, next_id = await mark_next_person(queue_array)
 
-            # message user that its their turn now
-            await dp.bot.send_message(
-                next_id,
-                "Since one of your roommates left your team, it is now your "
-                f"turn in the {queue_name} queue.",
+                del queue_array[ct_pos]
+
+                # message user that its their turn now
+                await dp.bot.send_message(
+                    next_id,
+                    "Since one of your roommates left your team, it is now "
+                    f"your turn in the {queue_name} queue.",
+                )
+            else:
+                for index, member in enumerate(queue_array):
+                    if member["user_id"] == user_id:
+                        del queue_array[index]
+
+            new_data = {f"queues.{queue_name}": queue_array}
+            await queues.update_one(
+                {"id": team_id},
+                {"$set": new_data},
+                upsert=True,
             )
-        else:
-            for index, member in enumerate(queue_array):
-                if member["user_id"] == user_id:
-                    del queue_array[index]
-
-        new_data = {f"queues.{queue_name}": queue_array}
-        await queues.update_one({"id": team_id}, {"$set": new_data}, upsert=True)
 
     logging.info("User erased")
     await call.message.delete_reply_markup()
