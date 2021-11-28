@@ -8,9 +8,10 @@ from aiogram import types
 
 from .group_stuff import ask_to_add_to_group
 from .invite_link import send_invite_link
+from ..other_core_modules.get_confirmation import get_confirmation
 from loader import dp, queues, teams, users
 from utils.sticker_file_ids import CHARISMATIC_STICKER
-from utils.get_db_data import get_team_members
+from utils.get_db_data import get_team_id, get_team_members
 
 
 @dp.message_handler(commands="setup", state="*")
@@ -22,36 +23,12 @@ async def check_user(message: types.Message):
     """
     user_id = message.from_user.id
     user_name = message.from_user.full_name
+    # if user doesnt exist in db, team_id will be None
+    team_id = await get_team_id(user_id)
 
-    data = await users.find_one({"user_id": user_id})
-
-    if data:
-        team_id = data.get("team_id")
-        num_of_members = len(await get_team_members(user_id))
-
-        if user_id == team_id and num_of_members != 1:
-            # deleting the admin is a bit of a different operation
-            # since almost everything relies on admin's user id
-            callback_data = "ask_who_to_make_admin"
-        else:
-            callback_data = f"erase_{user_id}_{user_name}"
-
-        keyboard = types.InlineKeyboardMarkup()
-        buttons = [
-            types.InlineKeyboardButton(text="Yes", callback_data=callback_data),
-            types.InlineKeyboardButton(text="No", callback_data="cancel_setup"),
-        ]
-        keyboard.add(*buttons)
-
-        await message.answer(
-            "Looks like you are already a part of a roommates team. Are you "
-            "sure you want to continue with the <b>/setup</b> command?\n"
-            "(continuing will result in you getting erased from your "
-            "existing roommates)",
-            reply_markup=keyboard,
-        )
+    if team_id:
+        await get_confirmation(user_id, team_id)
     else:
-        user_name = message.from_user.full_name
         await setup_team(user_id, user_name)
         await send_invite_link(message)
         await ask_to_add_to_group(user_id)
@@ -74,18 +51,21 @@ async def setup_team(user_id, user_name):
     team_data = {
         "id": team_id,
         "members": {str(user_id): user_name},
-        "group_chat_id": "",
     }
-    await teams.update_one({"id": team_id}, {"$set": team_data}, upsert=True)
+    await teams.update_one(
+        {"id": team_id},
+        {"$set": team_data, "$unset": {"grougroup_chat_id": ""}},
+        upsert=True,
+    )
 
     queues_data = {"id": team_id, "queues": {}}
     await queues.update_one({"id": team_id}, {"$set": queues_data}, upsert=True)
 
 
-@dp.callback_query_handler(text="cancel_setup")
-async def cancel_setup(call: types.CallbackQuery):
+@dp.callback_query_handler(text="cancel_erasing")
+async def cancel_erasing(call: types.CallbackQuery):
     """
-    Informs the user that the bot will not continue with the /setup command.
+    Informs the user that the bot will not continue with erasing the user.
     """
     await call.message.delete_reply_markup()
 

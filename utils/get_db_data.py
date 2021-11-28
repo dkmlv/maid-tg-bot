@@ -12,21 +12,25 @@ from loader import teams, users, queues
 
 async def get_team_id(user_id):
     """
-    Returns the team id of a user based on his/her user id.
+    Returns the team id of a user based on his/her user id
     (this is just a very simple query to mongodb)
     """
     data = await users.find_one(
         {"user_id": user_id},
         {"team_id": 1, "_id": 0},
     )
-    team_id = data["team_id"]
+
+    if data:
+        team_id = data.get("team_id")
+    else:
+        team_id = None
 
     return team_id
 
 
 async def get_team_members(user_id):
     """
-    Return the team members a user has based on his/her user id.
+    Return the team members a user has based on his/her user id
     (this is also another very simple query to mongodb)
     """
     team_id = await get_team_id(user_id)
@@ -92,7 +96,8 @@ async def get_queue_list(queue_array):
 
 async def get_setup_person(team_id):
     """
-    Returns the name of the person who is doing all the setup in a given team.
+    Returns the name of the person who is doing all the setup in a given team
+    (aka the admin)
     """
     setup_person = await users.find_one(
         {"user_id": team_id},

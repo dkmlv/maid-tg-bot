@@ -8,6 +8,7 @@ import logging
 from aiogram import types
 from aiogram.utils.deep_linking import decode_payload
 
+from ..other_core_modules.get_confirmation import get_confirmation
 from loader import dp, teams, users
 from utils.get_db_data import get_setup_person, get_team_members, get_team_id
 from utils.sticker_file_ids import (
@@ -27,12 +28,16 @@ async def greet(message: types.Message):
 
     await message.answer_sticker(HI_STICKER)
 
-    if args and message.chat.type == "private":
-        payload = decode_payload(args)
+    user_id = message.from_user.id
+    user_name = message.from_user.full_name
+    team_id = await get_team_id(user_id)
 
-        user_name = message.from_user.full_name
-        user_id = message.from_user.id
-        team_id = int(payload)
+    if args and message.chat.type == "private" and team_id:
+        # user that already exists in the db is starting with an invite link
+        await get_confirmation(user_id, team_id)
+    elif args and message.chat.type == "private":
+        # user that doesnt exist in the db is starting with an invite link
+        team_id = int(decode_payload(args))
 
         user_data = {
             "name": user_name,

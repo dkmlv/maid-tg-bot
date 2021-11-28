@@ -1,5 +1,5 @@
 """
-Deleting the admin (aka setup person) from the roommates team.
+Transferring admin privileges to someone else in the team.
 Since the whole bot heavily relies on admin's id, when they leave,
 they should pick someone else to take the admin privileges first.
 """
@@ -99,9 +99,7 @@ async def make_admin(call: types.CallbackQuery):
 
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(
-        types.InlineKeyboardButton(
-            text="Yes", callback_data=f"erase_{old_admin_id}_{old_admin_name}"
-        )
+        types.InlineKeyboardButton(text="Yes", callback_data=f"erase_{old_admin_id}")
     )
 
     await call.message.answer(
