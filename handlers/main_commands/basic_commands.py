@@ -20,6 +20,7 @@ from utils.sticker_file_ids import (
 
 
 @dp.message_handler(commands="start", state="*")
+@dp.throttled(rate=2)
 async def greet(message: types.Message):
     """
     Greets the user.
@@ -84,6 +85,7 @@ async def greet(message: types.Message):
 
 
 @dp.message_handler(commands="list", state="*")
+@dp.throttled(rate=2)
 async def provide_list(message: types.Message):
     """
     Provides the list of roommates that the user has.
@@ -127,6 +129,7 @@ async def provide_list(message: types.Message):
 
 
 @dp.message_handler(commands="help", state="*")
+@dp.throttled(rate=2)
 async def give_help(message: types.Message):
     """
     Provides some instructions on how to use the bot to the user + brief info.

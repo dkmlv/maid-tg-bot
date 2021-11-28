@@ -9,6 +9,7 @@ from aiogram import types
 from .transfer_turn import mark_next_person
 from loader import dp, queues, sched, teams, users
 from utils.get_db_data import get_team_id, get_team_members, get_current_turn
+from utils.sticker_file_ids import NOPE_STICKER
 
 
 @dp.callback_query_handler(text="ask_which_user")
@@ -16,29 +17,38 @@ async def ask_who_to_delete(call: types.CallbackQuery):
     """
     Asks to select a roommate to remove from the team.
     """
-    members = await get_team_members(call.from_user.id)
+    user_id = call.from_user.id
+    team_id = await get_team_id(user_id)
 
-    buttons = []
-    for member_id, member_name in members.items():
-        # admin (setup person) wont be able to delete themselves this way
-        # (they can still delete themselves using /setup)
-        if int(member_id) == call.from_user.id:
-            continue
-
-        buttons.append(
-            types.InlineKeyboardButton(
-                text=member_name,
-                callback_data=f"erase_{member_id}_{member_name}",
-            )
+    if user_id != team_id:
+        await call.message.answer_sticker(NOPE_STICKER)
+        await call.message.answer(
+            "Sorry, you do not have permission to remove a user from a team."
         )
+    else:
+        members = await get_team_members(user_id)
 
-    keyboard = types.InlineKeyboardMarkup(row_width=1)
-    keyboard.add(*buttons)
+        buttons = []
+        for member_id, member_name in members.items():
+            # admin (setup person) wont be able to delete themselves this way
+            # (they can still delete themselves using /setup)
+            if int(member_id) == call.from_user.id:
+                continue
 
-    await call.message.edit_text(
-        "<b>Select the roommate you want to remove.</b>",
-        reply_markup=keyboard,
-    )
+            buttons.append(
+                types.InlineKeyboardButton(
+                    text=member_name,
+                    callback_data=f"erase_{member_id}_{member_name}",
+                )
+            )
+
+        keyboard = types.InlineKeyboardMarkup(row_width=1)
+        keyboard.add(*buttons)
+
+        await call.message.edit_text(
+            "<b>Select the roommate you want to remove.</b>",
+            reply_markup=keyboard,
+        )
 
     await call.answer()
 

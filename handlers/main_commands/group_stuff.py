@@ -25,8 +25,8 @@ async def ask_to_add_to_group(user_id):
 
     await dp.bot.send_message(
         user_id,
-        "Also I'd like to kindly ask you to add me to your roommates group "
-        "here on Telegram. If you dont't already have one, please create it "
+        "Also I'd like to kindly ask you to add me to your roommates' group "
+        "here on Telegram. If you don't already have one, please create it "
         "and add me there. Otherwise, whenever there is a problem with the "
         "queue, I won't be able to help you.",
         reply_markup=keyboard,

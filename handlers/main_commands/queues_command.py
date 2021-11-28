@@ -15,8 +15,56 @@ from utils.get_db_data import (
 from utils.sticker_file_ids import NOPE_STICKER
 
 
+async def get_admin_keyboard():
+    """
+    Returns an inline keyboard for the admin issuing /queues command.
+    Admin keyboard is different from user keyboard since it has more
+    options (modify, delete, create)
+    """
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
+
+    buttons = [
+        types.InlineKeyboardButton(
+            text="Show Queue",
+            callback_data="show",
+        ),
+        types.InlineKeyboardButton(
+            text="Modify Queue",
+            callback_data="modify",
+        ),
+        types.InlineKeyboardButton(
+            text="Delete Queue",
+            callback_data="delete",
+        ),
+        types.InlineKeyboardButton(
+            text="Create New Queue",
+            callback_data="create",
+        ),
+    ]
+    keyboard.add(*buttons)
+
+    return keyboard
+
+
+async def get_user_keyboard():
+    """
+    Returns an inline keyboard for any user (not admin) issuing /queues command.
+    """
+    keyboard = types.InlineKeyboardMarkup()
+
+    keyboard.add(
+        types.InlineKeyboardButton(
+            text="Show Queue",
+            callback_data="show",
+        )
+    )
+
+    return keyboard
+
+
 @dp.message_handler(commands="queues", state="*")
 @dp.callback_query_handler(text="back")
+@dp.throttled(rate=2)
 async def show_queues(entity):
     """
     Shows all the chore queues the user has along with some options on what can
@@ -41,34 +89,14 @@ async def show_queues(entity):
     )
     queues_data = queues_data["queues"]
 
-    if queues_data:
+    if queues_data and entity.from_user.id == team_id:
         queue_names = queues_data.keys()
 
         queues_list = ""
         for queue in queue_names:
             queues_list += f"- <i>{queue}</i>\n"
 
-        keyboard = types.InlineKeyboardMarkup(row_width=2)
-
-        buttons = [
-            types.InlineKeyboardButton(
-                text="Show Queue",
-                callback_data="show",
-            ),
-            types.InlineKeyboardButton(
-                text="Modify Queue",
-                callback_data="modify",
-            ),
-            types.InlineKeyboardButton(
-                text="Delete Queue",
-                callback_data="delete",
-            ),
-            types.InlineKeyboardButton(
-                text="Create New Queue",
-                callback_data="create",
-            ),
-        ]
-        keyboard.add(*buttons)
+        keyboard = await get_admin_keyboard()
 
         text = (
             f"<b>Here are all the queues you have set up:</b>\n{queues_list}\n"
@@ -77,6 +105,22 @@ async def show_queues(entity):
             "select the <b>Modify Queue</b> option below.\n"
             "To delete a queue, press <b>Delete Queue</b>.\n"
             "To set up a new queue, press <b>Create New Queue</b>."
+        )
+    elif queues_data:
+        # every user other than the admin is using /queues command
+        # at least one queue is set up
+        queue_names = queues_data.keys()
+
+        queues_list = ""
+        for queue in queue_names:
+            queues_list += f"- <i>{queue}</i>\n"
+
+        keyboard = await get_user_keyboard()
+
+        text = (
+            f"<b>Here are all the queues you have set up:</b>\n{queues_list}\n"
+            "If you'd like me to show a certain queue, please press "
+            "<b>Show Queue</b> button below."
         )
     else:
         keyboard = types.InlineKeyboardMarkup()
@@ -114,8 +158,8 @@ async def ask_which_q(call: types.CallbackQuery):
         await call.message.answer(
             f"Sorry, you do not have permission to {operation} queues.\nAs "
             "part of a security measure, only the person who did the initial "
-            "setup has permission to modify/create queues.\nIn your list of "
-            f"roommates, that person is {setup_person}."
+            "setup has permission to modify/create/delete queues.\nIn your "
+            f"list of roommates, that person is {setup_person}."
         )
     else:
         queues_data = await queues.find_one(

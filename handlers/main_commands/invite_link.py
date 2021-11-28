@@ -12,6 +12,7 @@ from utils.get_db_data import get_team_id
 
 
 @dp.message_handler(commands="invite_link")
+@dp.throttled(rate=2)
 async def send_invite_link(message: types.Message):
     """
     Generates an invite link to the user's current team and sends it back.
@@ -28,8 +29,7 @@ async def send_invite_link(message: types.Message):
         )
     else:
         link = await get_start_link(payload=str(team_id), encode=True)
-        await dp.bot.send_message(
-            user_id,
+        await message.reply(
             f"Here's your <b>invite link</b>:\n{link}\n\n"
             "You should share it with your roommates.\n"
             "This link will just let me know that people who click on it are "

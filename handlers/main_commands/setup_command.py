@@ -15,6 +15,7 @@ from utils.get_db_data import get_team_id, get_team_members
 
 
 @dp.message_handler(commands="setup", state="*")
+@dp.throttled(rate=2)
 async def check_user(message: types.Message):
     """
     Checks if the user exists in the database.
