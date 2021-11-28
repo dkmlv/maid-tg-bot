@@ -26,6 +26,15 @@ async def show_queues(entity):
     """
     team_id = await get_team_id(entity.from_user.id)
 
+    if not team_id:
+        # user is not a part of any team
+        await entity.reply(
+            "You are not a part of any team yet. To set up a new team for "
+            "yourself, use the <b>/setup</b> command. If you'd like to join "
+            "someone else's team, simply go through their invite link now."
+        )
+        return
+
     queues_data = await queues.find_one(
         {"id": team_id},
         {"queues": 1, "_id": 0},

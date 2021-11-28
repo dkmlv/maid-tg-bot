@@ -90,6 +90,16 @@ async def provide_list(message: types.Message):
     """
     user_id = message.from_user.id
     team_id = await get_team_id(user_id)
+
+    if not team_id:
+        # user is not a part of any team
+        await message.reply(
+            "You are not a part of any team yet. To set up a new team for "
+            "yourself, use the <b>/setup</b> command. If you'd like to join "
+            "someone else's team, simply go through their invite link now."
+        )
+        return
+
     members = await get_team_members(user_id)
 
     if user_id == team_id:

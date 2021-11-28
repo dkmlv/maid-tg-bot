@@ -123,7 +123,7 @@ async def erase_anyone(call: types.CallbackQuery):
         user_id,
         "You have been deleted from your roommates team. To set up a new team "
         "for yourself, use the <b>/setup</b> command. If you'd like to join "
-        "someone else's team, simply go through their invite link now."
+        "someone else's team, simply go through their invite link now.",
     )
 
     await call.answer()
