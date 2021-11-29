@@ -5,16 +5,13 @@ times in the code.
 """
 
 import logging
-from typing import Tuple
+from typing import Tuple, Union
 
-from loader import teams, users, queues
+from loader import queues, teams, users
 
 
-async def get_team_id(user_id):
-    """
-    Returns the team id of a user based on his/her user id
-    (this is just a very simple query to mongodb)
-    """
+async def get_team_id(user_id: int) -> Union[int, None]:
+    """Return the team id of a user based on their user id."""
     data = await users.find_one(
         {"user_id": user_id},
         {"team_id": 1, "_id": 0},
@@ -28,11 +25,8 @@ async def get_team_id(user_id):
     return team_id
 
 
-async def get_team_members(user_id):
-    """
-    Return the team members a user has based on his/her user id
-    (this is also another very simple query to mongodb)
-    """
+async def get_team_members(user_id: int) -> list:
+    """Return the team members a user has based on their user id."""
     team_id = await get_team_id(user_id)
     team_data = await teams.find_one(
         {"id": team_id},
@@ -43,11 +37,8 @@ async def get_team_members(user_id):
     return members
 
 
-async def get_team_chat(user_id):
-    """
-    Returns the team's Telegram group chat id.
-    If it fails to find it, returns None
-    """
+async def get_team_chat(user_id: int) -> Union[int, None]:
+    """Return the team's Telegram group chat id."""
     team_id = await get_team_id(user_id)
     team_data = await teams.find_one(
         {"id": team_id},
@@ -62,11 +53,8 @@ async def get_team_chat(user_id):
     return group_chat_id
 
 
-async def get_queue_array(team_id, queue_name):
-    """
-    Returns the queue array for a particular queue for a specific team id.
-    (yet again a very simple search query)
-    """
+async def get_queue_array(team_id: int, queue_name: str) -> list:
+    """Return queue array for a team's specific queue."""
     queues_data = await queues.find_one(
         {"id": team_id},
         {"queues": 1, "_id": 0},
@@ -76,11 +64,8 @@ async def get_queue_array(team_id, queue_name):
     return queue_array
 
 
-async def get_queue_list(queue_array):
-    """
-    Returns the queue list using the queue array.
-    (this function will mainly be called by another function)
-    """
+async def get_queue_list(queue_array: list) -> str:
+    """Return the queue list using the queue array."""
     queue_list = ""
     for index, member in enumerate(queue_array, start=1):
         name = member["name"]
@@ -94,11 +79,8 @@ async def get_queue_list(queue_array):
     return queue_list
 
 
-async def get_setup_person(team_id):
-    """
-    Returns the name of the person who is doing all the setup in a given team
-    (aka the admin)
-    """
+async def get_setup_person(team_id: int) -> str:
+    """Return the name of the setup person (aka admin) in a team"""
     setup_person = await users.find_one(
         {"user_id": team_id},
         {"name": 1, "_id": 0},
@@ -107,10 +89,13 @@ async def get_setup_person(team_id):
     return setup_person["name"]
 
 
-async def get_current_turn(queue_array) -> Tuple[int, str, int]:
-    """
-    Get the person whose turn it is to do the chore in a queue.
-    Returns a tuple of form: (user_id, user_name, index_position)
+async def get_current_turn(queue_array: list) -> Tuple[int, str, int]:
+    """Get the person whose turn it is to do the chore in a queue.
+
+    Returns
+    -------
+    Tuple[int, str, int]
+        A tuple of form: (user_id, user_name, index_position)
     """
     for index, member in enumerate(queue_array):
         if member["current_turn"]:

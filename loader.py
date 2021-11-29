@@ -1,10 +1,10 @@
 import logging
 
-import motor.motor_asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.mongo import MongoStorage
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler as Scheduler
+import motor.motor_asyncio
 from pymongo import MongoClient
 
 from data import config

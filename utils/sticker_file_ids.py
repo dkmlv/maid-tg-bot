@@ -1,6 +1,6 @@
 """
-This file stores all the sticker file ids of the stickers that the bot is
-going to use.
+This file stores all the sticker file ids of the stickers that the bot
+is going to use.
 """
 
 
