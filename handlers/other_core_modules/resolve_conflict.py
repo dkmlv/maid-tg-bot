@@ -172,7 +172,7 @@ async def swap_users(call: types.CallbackQuery):
         if member["user_id"] == call.from_user.id:
             user_pos = index
 
-    if type(user_pos) != int:
+    if not isinstance(user_pos, int):
         # person who replied is not in the roommates group in the db
         await call.message.answer_sticker(NOPE_STICKER)
         await call.message.answer(

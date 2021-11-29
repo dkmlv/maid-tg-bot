@@ -142,7 +142,7 @@ async def give_help(message: types.Message):
     )
 
 
-@dp.message_handler(regexp="(thank you|ty)", state=None)
+@dp.message_handler(regexp="(thank you|ty|thx|thanks)", state=None)
 async def react_to_thanks(message: types.Message):
     """React to a 'thank you' message sent by the user."""
     logging.info("Someone typed 'thank you', wow.")

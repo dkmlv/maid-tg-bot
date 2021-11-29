@@ -36,5 +36,5 @@ async def send_invite_link(message: types.Message):
             "your roommates and you will be able to see them on the list using "
             "the <b>/list</b> command.\n\n"
             "Once you see that all of your roommates are on the list, you can "
-            "proceed with the setup of queues.",
+            "proceed with the setup of <b>/queues</b>.",
         )

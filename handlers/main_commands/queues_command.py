@@ -116,11 +116,7 @@ async def list_queues(entity: Union[types.Message, types.CallbackQuery]):
 
         text = (
             f"<b>Here are all the queues you have set up:</b>\n{queues_list}\n"
-            "If you'd like me to show a certain queue, please press "
-            "<b>Show Queue</b> button below.\nTo modify a queue, please "
-            "select the <b>Modify Queue</b> option below.\n"
-            "To delete a queue, press <b>Delete Queue</b>.\n"
-            "To set up a new queue, press <b>Create New Queue</b>."
+            "Please choose one of the options below."
         )
     elif queues_data:
         # this is non-admin user and at least one queue is set up
@@ -134,8 +130,8 @@ async def list_queues(entity: Union[types.Message, types.CallbackQuery]):
 
         text = (
             f"<b>Here are all the queues you have set up:</b>\n{queues_list}\n"
-            "If you'd like me to show a certain queue, please press "
-            "<b>Show Queue</b> button below."
+            "If you'd like me to show a certain queue, please select <b>Show "
+            "Queue</b>."
         )
     else:
         keyboard = types.InlineKeyboardMarkup()
@@ -161,6 +157,7 @@ async def ask_which_queue(call: types.CallbackQuery):
     """Ask the user which queue they'd like to see/modify/delete."""
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
+    assert team_id is not None
     operation = call.data
 
     if (operation == "modify" or operation == "delete") and user_id != team_id:
