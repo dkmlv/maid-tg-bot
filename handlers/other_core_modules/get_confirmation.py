@@ -6,19 +6,22 @@ This is needed either when:
     2) User wants so sign up with an invite link while already in a team.
 """
 
-import logging
-
 from aiogram import types
-
 from loader import dp
 from utils.get_db_data import get_team_members
 
 
 async def get_confirmation(user_id: int, team_id: int):
+    """Confirm the user wants to erase themselves from present team.
+
+    Parameters
+    ----------
+    user_id : int
+        Telegram user id of the user who wants to get erased
+    team_id: int
+        The team from which the user wants to get erased
     """
-    Gets confirmation that the user wants to erase themselves from their present
-    roommates' team.
-    """
+
     num_of_members = len(await get_team_members(user_id))
 
     if user_id == team_id and num_of_members != 1:

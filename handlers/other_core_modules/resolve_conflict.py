@@ -11,7 +11,6 @@ import logging
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from apscheduler.jobstores.base import JobLookupError
-
 from loader import dp, queues, sched
 from states.all_states import TrackingQueue
 from utils.get_db_data import (
@@ -31,10 +30,8 @@ from utils.sticker_file_ids import (
 HOURS = 2
 
 
-async def get_later_time():
-    """
-    Returns the time that is HOURS from now as a datetime string in isoformat.
-    """
+async def get_later_time() -> str:
+    """Return the time that is HOURS from now as an isoformat string."""
     now = dt.datetime.now()
     hours = dt.timedelta(hours=HOURS)
 
@@ -42,10 +39,26 @@ async def get_later_time():
 
 
 async def skip_chore_today(group_chat_id, user_name, queue_name):
+    """Text the group that the chore is considered incomplete.
+
+    This message will be sent if no one has indicated that they can
+    substitute the person who can't do the chore.
+
+    Parameters
+    ----------
+    group_chat_id : int
+        The group chat to which the message should be sent
+    user_name : str
+        The first name of the person who can't do the chore that day
+    queue_name : str
+        Name of queue in which the chore is considered incomplete
+
+    Notes
+    -----
+    Anyone can still press the 'I can do it' button and substitute the
+    person even after this message is sent.
     """
-    Lets the group know that the chore is considered incomplete and has been
-    skipped for the day.
-    """
+
     await dp.bot.send_sticker(group_chat_id, WHATEVER_STICKER)
     await dp.bot.send_message(
         group_chat_id,
@@ -57,12 +70,12 @@ async def skip_chore_today(group_chat_id, user_name, queue_name):
 
 @dp.callback_query_handler(text_startswith="ask_why_")
 async def ask_for_reason(call: types.CallbackQuery, state: FSMContext):
-    """
-    Handler will be called when user doesnt have time to complete the chore.
-    Asks the user why they dont have time to do the chore.
+    """Ask the user why they don't have time to do the chore.
+
     The answer will be sent to the user's group chat along with a question of
     who can do the chore instead.
     """
+
     await call.message.delete()
     await TrackingQueue.waiting_for_reason.set()
 
@@ -79,13 +92,14 @@ async def ask_for_reason(call: types.CallbackQuery, state: FSMContext):
 
 @dp.message_handler(state=TrackingQueue.waiting_for_reason)
 async def inform_and_resolve(message: types.Message, state: FSMContext):
+    """Inform why chore can't be done and ask who can do it instead.
+
+    The first person to reply 'Yes' is swapped in the queue with the
+    person who couldn't do the chore. If no one replies 'Yes' in HOURS,
+    bot considers the chore as incomplete and doesn't reassign current
+    turn.
     """
-    User has provided a reason and that reason is sent to the group.
-    Bot asks who can do the chore instead.
-    The first person to reply 'Yes' is swapped in the queue with current_turn.
-    If no one replies 'Yes' in HOURS, bot considers the chore as incomplete
-    and doesnt reassign current turn.
-    """
+
     reason = message.text
     user_name = message.from_user.full_name
     group_chat_id = await get_team_chat(message.from_user.id)
@@ -93,8 +107,8 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
 
     if not group_chat_id:
         await message.answer(
-            "Looks like you don't have a group chat.\nPlease create a group (if "
-            "you don't already have one) and add me there, so that we can "
+            "Looks like you don't have a group chat.\nPlease create a group ("
+            "if you don't already have one) and add me there, so that we can "
             "solve this problem. Once I'm added to the group, send me the "
             "reason again."
         )
@@ -139,9 +153,7 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
 
 @dp.callback_query_handler(text_startswith="swap_")
 async def swap_users(call: types.CallbackQuery):
-    """
-    Swaps two users in the queue.
-    """
+    """Swap two users in the queue."""
     # data passed in will be in the form of "swap_qname_-123456789"
     data = call.data.split("_")
     queue_name = data[1]

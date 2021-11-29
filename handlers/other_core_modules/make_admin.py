@@ -7,17 +7,13 @@ they should pick someone else to take the admin privileges first.
 import logging
 
 from aiogram import types
-
 from loader import dp, queues, sched, teams, users
 from utils.get_db_data import get_team_members
 
 
 @dp.callback_query_handler(text="ask_who_to_make_admin")
 async def ask_who_to_make_admin(call: types.CallbackQuery):
-    """
-    Asks the admin to pick someone from the team to transfer admin
-    priviliges to them.
-    """
+    """Ask the admin to pick someone to transfer admin priviliges to."""
     members = await get_team_members(call.from_user.id)
 
     buttons = []
@@ -46,10 +42,11 @@ async def ask_who_to_make_admin(call: types.CallbackQuery):
 
 @dp.callback_query_handler(text_startswith="mkadmin_")
 async def make_admin(call: types.CallbackQuery):
-    """
-    Transfer admin priviliges to the user.
+    """Transfer admin priviliges to the user.
+
     Their user id becomes the new team id for everyone in the team.
     """
+
     await call.message.delete()
 
     data = call.data.split("_")
@@ -80,8 +77,8 @@ async def make_admin(call: types.CallbackQuery):
         {"$set": {"id": new_admin_id}},
     )
 
-    # ideally u'd modify the jobs to reflect the new team_id, but that can't
-    # really be done, so removing jobs and informing is what i went for
+    # ideally u'd modify the jobs to reflect the new team_id, but i
+    # couldn't do that, so i went for removing jobs and informing
     jobs = sched.get_jobs(jobstore="mongo")
     for job in jobs:
         if job.id.endswith(str(old_admin_id)):

@@ -5,18 +5,16 @@ Deleting any user from their present roommates' team.
 import logging
 
 from aiogram import types
+from loader import dp, queues, sched, teams, users
+from utils.get_db_data import get_current_turn, get_team_id, get_team_members
+from utils.sticker_file_ids import NOPE_STICKER
 
 from .transfer_turn import mark_next_person
-from loader import dp, queues, sched, teams, users
-from utils.get_db_data import get_team_id, get_team_members, get_current_turn
-from utils.sticker_file_ids import NOPE_STICKER
 
 
 @dp.callback_query_handler(text="ask_which_user")
 async def ask_who_to_delete(call: types.CallbackQuery):
-    """
-    Asks to select a roommate to remove from the team.
-    """
+    """Ask to select a roommate to remove from the team."""
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
 
@@ -38,7 +36,7 @@ async def ask_who_to_delete(call: types.CallbackQuery):
             buttons.append(
                 types.InlineKeyboardButton(
                     text=member_name,
-                    callback_data=f"erase_{member_id}_{member_name}",
+                    callback_data=f"erase_{member_id}",
                 )
             )
 
@@ -53,10 +51,22 @@ async def ask_who_to_delete(call: types.CallbackQuery):
     await call.answer()
 
 
-async def erase_from_old_queues(user_id: int, team_id: int):
+async def erase_from_queues(user_id: int, team_id: int):
+    """Erase a user from their present queues.
+
+    This is kept as a separate function since this is a bit complicated
+    since the user getting erased may have their current_turn True.
+    In this case, the current_turn should be transferred to the next
+    person in the queue and only then should the user be erased.
+
+    Parameters
+    ----------
+    user_id : int
+        Telegram user id of the user getting erased
+    team_id : int
+        The team from which the user is getting erased
     """
-    Erases a user from their old queues.
-    """
+
     queue_data = await queues.find_one(
         {"id": team_id},
         {"queues": 1, "_id": 0},
@@ -83,6 +93,7 @@ async def erase_from_old_queues(user_id: int, team_id: int):
             for index, member in enumerate(queue_array):
                 if member["user_id"] == user_id:
                     del queue_array[index]
+                    break
 
         new_data = {f"queues.{queue_name}": queue_array}
         await queues.update_one(
@@ -94,9 +105,7 @@ async def erase_from_old_queues(user_id: int, team_id: int):
 
 @dp.callback_query_handler(text_startswith="erase_")
 async def erase_anyone(call: types.CallbackQuery):
-    """
-    Erase anyone (user/admin) from old team and old queues.
-    """
+    """Erase anyone (user/admin) from present team and present queues."""
     data = call.data.split("_")
     user_id = int(data[1])
 
@@ -123,8 +132,8 @@ async def erase_anyone(call: types.CallbackQuery):
             {"$unset": {f"members.{user_id}": ""}},
         )
 
-        # erasing user from old queues
-        await erase_from_old_queues(user_id, team_id)
+        # erasing user from present queues
+        await erase_from_queues(user_id, team_id)
 
     logging.info("User erased")
     await call.message.delete_reply_markup()

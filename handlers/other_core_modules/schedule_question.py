@@ -11,18 +11,26 @@ import logging
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils import exceptions
-
 from loader import dp, sched
 from states.all_states import QueueSetup
-from utils.get_db_data import get_current_turn, get_team_id, get_queue_array
+from utils.get_db_data import get_current_turn, get_queue_array, get_team_id
 from utils.sticker_file_ids import CHARISMATIC_STICKER
 
 
 async def send_question(team_id, queue_name):
+    """Send the question to the current turn person.
+
+    The question is really just 'can you do this chore today?'.
+
+    Parameters
+    ----------
+    team_id : int
+        The id of the team. This will be used to get the person whose
+        turn it is in the queue.
+    queue_name : str
+        This represents the name of the queue.
     """
-    Gets the current turn person in a queue and sends the question to them
-    (the 'can you do this chore today?' question).
-    """
+
     queue_array = await get_queue_array(team_id, queue_name)
     user_id, user_name, _ = await get_current_turn(queue_array)
 
@@ -42,7 +50,13 @@ async def send_question(team_id, queue_name):
         await dp.bot.send_message(user_id, text, reply_markup=keyboard)
     except exceptions.BotBlocked:
         logging.error(f"Target [ID:{user_id}]: blocked by user")
-        # TODO: inform the admin that user has blocked the bot
+        # inform the admin that user has blocked the bot
+        await dp.bot.send_message(
+            team_id,
+            f"In your team, <b>{user_name}</b> has blocked me. You might "
+            "wanna talk to them about it or remove them from your team using "
+            "the <b>/list</b> command.",
+        )
     except exceptions.RetryAfter as e:
         logging.error(
             f"Target [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds."
@@ -51,7 +65,13 @@ async def send_question(team_id, queue_name):
         return await send_question(team_id, queue_name)  # Recursive call
     except exceptions.UserDeactivated:
         logging.error(f"Target [ID:{user_id}]: user is deactivated")
-        # TODO: inform admin that user has deleted their account
+        # inform admin that user has deleted their account
+        await dp.bot.send_message(
+            team_id,
+            f"In your team, <b>{user_name}</b> has deleted their account. You "
+            "might wanna talk to them about it or remove them from your team "
+            "using the <b>/list</b> command.",
+        )
     except exceptions.TelegramAPIError:
         logging.exception(f"Target [ID:{user_id}]: failed")
     else:
@@ -60,10 +80,7 @@ async def send_question(team_id, queue_name):
 
 @dp.message_handler(regexp=r"[0-2]?\d:[0-5]\d", state=QueueSetup.waiting_for_time)
 async def schedule_question(message: types.Message, state: FSMContext):
-    """
-    Schedules the question to be sent to the current turn user
-    (the 'can you do this chore today?' question).
-    """
+    """Schedule the question to send to the current turn user."""
     team_id = await get_team_id(message.from_user.id)
 
     time = message.text.split(":")
