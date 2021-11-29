@@ -11,13 +11,14 @@ import logging
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 from aiogram.utils import exceptions
+
 from loader import dp, sched
 from states.all_states import QueueSetup
 from utils.get_db_data import get_current_turn, get_queue_array, get_team_id
 from utils.sticker_file_ids import CHARISMATIC_STICKER
 
 
-async def send_question(team_id, queue_name):
+async def send_question(team_id: int, queue_name: str):
     """Send the question to the current turn person.
 
     The question is really just 'can you do this chore today?'.

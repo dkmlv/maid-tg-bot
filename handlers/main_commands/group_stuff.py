@@ -8,6 +8,7 @@ import logging
 
 from aiogram import types
 from aiogram.utils.deep_linking import get_startgroup_link
+
 from loader import dp, teams
 from utils.get_db_data import get_team_id
 

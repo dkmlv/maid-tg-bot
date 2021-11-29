@@ -7,6 +7,7 @@ they should pick someone else to take the admin privileges first.
 import logging
 
 from aiogram import types
+
 from loader import dp, queues, sched, teams, users
 from utils.get_db_data import get_team_members
 

@@ -7,6 +7,7 @@ import logging
 from typing import Union
 
 from aiogram import types
+
 from loader import dp, queues
 from utils.get_db_data import get_setup_person, get_team_id
 from utils.sticker_file_ids import NOPE_STICKER

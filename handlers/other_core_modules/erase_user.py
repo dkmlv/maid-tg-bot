@@ -5,6 +5,7 @@ Deleting any user from their present roommates' team.
 import logging
 
 from aiogram import types
+
 from loader import dp, queues, sched, teams, users
 from utils.get_db_data import get_current_turn, get_team_id, get_team_members
 from utils.sticker_file_ids import NOPE_STICKER

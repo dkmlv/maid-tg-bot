@@ -5,6 +5,7 @@ Handling the /setup command here. Shocking.
 import logging
 
 from aiogram import types
+
 from loader import dp, queues, teams, users
 from utils.get_db_data import get_team_id
 from utils.sticker_file_ids import CHARISMATIC_STICKER

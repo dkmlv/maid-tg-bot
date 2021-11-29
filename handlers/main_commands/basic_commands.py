@@ -7,6 +7,7 @@ import logging
 
 from aiogram import types
 from aiogram.utils.deep_linking import decode_payload
+
 from loader import dp, teams, users
 from utils.get_db_data import get_setup_person, get_team_id, get_team_members
 from utils.sticker_file_ids import (

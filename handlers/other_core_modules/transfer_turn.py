@@ -7,6 +7,7 @@ import logging
 from typing import Tuple
 
 from aiogram import types
+
 from loader import dp, queues
 from utils.get_db_data import get_queue_array, get_team_id
 from utils.sticker_file_ids import CHARISMATIC_STICKER
