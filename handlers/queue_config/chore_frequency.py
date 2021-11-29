@@ -4,14 +4,11 @@ Deals with asking the user how often a chore is done and when the
 question should be sent.
 """
 
-import logging
-
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-from loader import dp, queues
+from loader import dp
 from states.all_states import QueueSetup
-
 
 WEEK_DAYS = [
     "monday",
@@ -25,9 +22,7 @@ WEEK_DAYS = [
 
 
 async def ask_chore_frequency(call: types.CallbackQuery):
-    """
-    Asks the user how often the chore is done.
-    """
+    """Ask the user how often the chore is done."""
     keyboard = types.InlineKeyboardMarkup()
 
     buttons = [
@@ -45,16 +40,16 @@ async def ask_chore_frequency(call: types.CallbackQuery):
 
 @dp.callback_query_handler(text="once", state=QueueSetup.setting_up)
 async def ask_which_day(call: types.CallbackQuery):
-    """
-    Asks the user what day of the week the chore is done.
-    """
+    """Ask the user what day of the week the chore is done."""
     keyboard = types.InlineKeyboardMarkup(row_width=3)
 
     buttons = []
-
     for index, day in enumerate(WEEK_DAYS):
         buttons.append(
-            types.InlineKeyboardButton(text=day.title(), callback_data=str(index)),
+            types.InlineKeyboardButton(
+                text=day.title(),
+                callback_data=str(index),
+            ),
         )
 
     keyboard.add(*buttons)
@@ -71,11 +66,12 @@ async def ask_which_day(call: types.CallbackQuery):
     state=QueueSetup.setting_up,
 )
 async def ask_time(call: types.CallbackQuery, state: FSMContext):
+    """Ask the user what time should the question be sent.
+
+    The question is just whether the person whose turn it is to do the
+    chore can do the chore that day.
     """
-    Asks the user what time should the question be sent.
-    The question is just whether the person whose turn it is to do the chore
-    can do the chore that day.
-    """
+
     await call.message.delete_reply_markup()
 
     chore_frequency = call.data

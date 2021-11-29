@@ -1,5 +1,5 @@
 """
-Reordering users' position in a given queue.
+Reordering users' positions in a given queue.
 """
 
 import logging
@@ -9,19 +9,15 @@ from aiogram.dispatcher import FSMContext
 
 from loader import dp, queues
 from states.all_states import QueueSetup
-from utils.get_db_data import (
-    get_team_id,
-    get_queue_list,
-)
+from utils.get_db_data import get_queue_list, get_team_id
 from utils.sticker_file_ids import CONFUSED_STICKER
 
 
 @dp.callback_query_handler(text="reorder", state=QueueSetup.setting_up)
 async def ask_to_pick(call: types.CallbackQuery, state: FSMContext):
-    """
-    First part of reordering the queue.
-    Asks the user to pick an item to move on the list.
-    """
+    """Ask the user to pick a person to move on the list (part 1)."""
+    logging.info("Reordering queue.")
+
     state_data = await state.get_data()
 
     queue_array = state_data["queue_array"]
@@ -50,10 +46,7 @@ async def ask_to_pick(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_startswith="from_", state=QueueSetup.setting_up)
 async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
-    """
-    Second part of reordering the queue.
-    Asks the user where they want to move the previously selected item.
-    """
+    """Ask the user where to move the previously selected item (part 2)."""
     from_position = int(call.data.split("_")[-1])
     await state.update_data(from_position=from_position)
 
@@ -64,7 +57,7 @@ async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
 
     queue_list = await get_queue_list(queue_array)
 
-    for index, member in enumerate(queue_array, start=1):
+    for index, _ in enumerate(queue_array, start=1):
         keyboard.add(
             types.InlineKeyboardButton(
                 text=str(index),
@@ -83,10 +76,7 @@ async def ask_to_position(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_startswith="to_", state=QueueSetup.setting_up)
 async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
-    """
-    Third & final part of reordering the queue.
-    Actually reorders the queue (big surprise)
-    """
+    """Reorder the queue and present it (final part 3)."""
     state_data = await state.get_data()
 
     from_position = state_data["from_position"]
@@ -124,12 +114,11 @@ async def reorder_queue(call: types.CallbackQuery, state: FSMContext):
     queue_list = await get_queue_list(queue_array)
 
     await call.message.edit_text(
-        f"<b>Here is your {queue_name} queue:</b>\n{queue_list}\nIf you would like "
-        f"the {queue_name} queue to have a different order, choose the <i><b>Reorder"
-        "</b></i> option below.\nOnce you are happy with the queue order, select "
-        "<i><b>Done</b></i>.",
+        f"<b>Here is your {queue_name} queue:</b>\n{queue_list}\nIf you "
+        f"would like the {queue_name} queue to have a different order, "
+        "choose the <b>Reorder</b> option below.\nOnce you are happy with "
+        "the queue order, select <b>Done</b>.",
         reply_markup=keyboard,
     )
 
     await call.answer()
-

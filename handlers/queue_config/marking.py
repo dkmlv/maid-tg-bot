@@ -3,22 +3,19 @@ Indicating whose turn it is in the queue to do the chore.
 Bot simply sets current_turn variable for the user to be True.
 """
 
-import logging
-
 from aiogram import types
 from aiogram.dispatcher import FSMContext
 
-from .chore_frequency import ask_chore_frequency
 from loader import dp, queues
 from states.all_states import QueueSetup
 from utils.get_db_data import get_team_id
 
+from .chore_frequency import ask_chore_frequency
+
 
 @dp.callback_query_handler(text="order_ready", state=QueueSetup.setting_up)
 async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
-    """
-    Asks the user whose turn it is on the list to do the chore.
-    """
+    """Ask the user whose turn it is on the list to do the chore."""
     state_data = await state.get_data()
 
     queue_array = state_data["queue_array"]
@@ -47,10 +44,11 @@ async def ask_whose_turn(call: types.CallbackQuery, state: FSMContext):
 
 @dp.callback_query_handler(text_startswith="mark_", state=QueueSetup.setting_up)
 async def mark_roommate(call: types.CallbackQuery, state: FSMContext):
+    """Change the 'current_turn' of the selected user to True.
+
+    Additionally, asks chore frequency.
     """
-    Changes the 'current_turn' status of the selected user to True.
-    Additionally asks chore frequency.
-    """
+
     state_data = await state.get_data()
 
     queue_name = state_data["queue_name"]

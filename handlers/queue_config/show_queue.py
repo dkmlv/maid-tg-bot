@@ -5,25 +5,20 @@ This, unlike every other option in the /queues inline keyboard, is
 available for all users, not just the admin.
 """
 
-
 import logging
 
 from aiogram import types
 
 from loader import dp
-from utils.get_db_data import (
-    get_queue_array,
-    get_queue_list,
-    get_team_id,
-)
+from utils.get_db_data import get_queue_array, get_queue_list, get_team_id
 from utils.sticker_file_ids import HERE_STICKER
 
 
 @dp.callback_query_handler(text_startswith="show_")
 async def show_a_queue(call: types.CallbackQuery):
-    """
-    Shows the queue a user has selected to him/her.
-    """
+    """Show the queue a user has selected to them."""
+    logging.info("Showing a queue.")
+
     team_id = await get_team_id(call.from_user.id)
     queue_type = call.data.split("_")[-1]
 

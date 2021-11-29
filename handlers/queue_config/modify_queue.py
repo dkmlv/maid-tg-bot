@@ -9,19 +9,15 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from loader import dp
-from utils.get_db_data import (
-    get_queue_array,
-    get_queue_list,
-    get_team_id,
-)
 from states.all_states import QueueSetup
+from utils.get_db_data import get_queue_array, get_queue_list, get_team_id
 
 
 @dp.callback_query_handler(text_startswith="modify_")
 async def modify_a_queue(call: types.CallbackQuery, state: FSMContext):
-    """
-    Resets the current_turn and presents the queue for modification.
-    """
+    """Reset the current_turn and presents the queue for modification."""
+    logging.info("Modifying queue.")
+
     await QueueSetup.setting_up.set()
 
     team_id = await get_team_id(call.from_user.id)
@@ -48,12 +44,11 @@ async def modify_a_queue(call: types.CallbackQuery, state: FSMContext):
     keyboard.add(*buttons)
 
     await call.message.edit_text(
-        f"<b>Here is your {queue_name} queue:</b>\n{queue_list}\nIf you would like "
-        f"the {queue_name} queue to have a different order, choose the <i><b>Reorder"
-        "</b></i> option below.\nOnce you are happy with the queue order, select "
-        "<i><b>Done</b></i>.",
+        f"<b>Here is your {queue_name} queue:</b>\n{queue_list}\nIf you "
+        f"would like the {queue_name} queue to have a different order, "
+        "choose the <b>Reorder</b> option below.\nOnce you are happy with "
+        "the queue order, select <b>Done</b>.",
         reply_markup=keyboard,
     )
 
     await call.answer()
-
