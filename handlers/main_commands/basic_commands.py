@@ -7,37 +7,39 @@ import logging
 
 from aiogram import types
 from aiogram.utils.deep_linking import decode_payload
-
-from ..other_core_modules.get_confirmation import get_confirmation
 from loader import dp, teams, users
-from utils.get_db_data import get_setup_person, get_team_members, get_team_id
+from utils.get_db_data import get_setup_person, get_team_id, get_team_members
 from utils.sticker_file_ids import (
-    HI_STICKER,
     HERE_STICKER,
+    HI_STICKER,
     HUMBLE_STICKER,
     QUESTION_STICKER,
 )
+
+from ..other_core_modules.get_confirmation import get_confirmation
 
 
 @dp.message_handler(commands="start", state="*")
 @dp.throttled(rate=2)
 async def greet(message: types.Message):
-    """
-    Greets the user.
-    """
+    """Greet the user. Messages vary depending on chat and start."""
+    logging.info("/start command issued.")
+
+    # if user starts with an invite link, relevant data will be in args
     args = message.get_args()
 
     await message.answer_sticker(HI_STICKER)
 
     user_id = message.from_user.id
     user_name = message.from_user.full_name
+    # if user doesnt exist in db, team_id will be None
     team_id = await get_team_id(user_id)
 
     if args and message.chat.type == "private" and team_id:
-        # user that already exists in the db is starting with an invite link
+        # user that exists in db is starting with an invite link
         await get_confirmation(user_id, team_id)
     elif args and message.chat.type == "private":
-        # user that doesnt exist in the db is starting with an invite link
+        # user that doesnt exist in db is starting with an invite link
         team_id = int(decode_payload(args))
 
         user_data = {
@@ -52,7 +54,7 @@ async def greet(message: types.Message):
         await teams.update_one({"id": team_id}, {"$set": team_data}, upsert=True)
 
         setup_person = await get_setup_person(team_id)
-        # notify the setup person that someone signed up with invite link
+        # notify setup person that someone signed up with invite link
         await dp.bot.send_message(
             team_id, f"{user_name} just signed up with your invite link."
         )
@@ -87,9 +89,9 @@ async def greet(message: types.Message):
 @dp.message_handler(commands="list", state="*")
 @dp.throttled(rate=2)
 async def provide_list(message: types.Message):
-    """
-    Provides the list of roommates that the user has.
-    """
+    """Provide the list of roommates that the user has."""
+    logging.info("/list command issued.")
+
     user_id = message.from_user.id
     team_id = await get_team_id(user_id)
 
@@ -131,9 +133,9 @@ async def provide_list(message: types.Message):
 @dp.message_handler(commands="help", state="*")
 @dp.throttled(rate=2)
 async def give_help(message: types.Message):
-    """
-    Provides some instructions on how to use the bot to the user + brief info.
-    """
+    """Provide instructions on how to use the bot + brief info."""
+    logging.info("/help command issued.")
+
     await message.reply(
         "<b>Instructions:</b>\n" "This is a test message that will be changed later."
     )
@@ -141,9 +143,8 @@ async def give_help(message: types.Message):
 
 @dp.message_handler(regexp="(thank you|ty)", state=None)
 async def react_to_thanks(message: types.Message):
-    """
-    This function will be called when the user types a random message.
-    """
+    """React to a 'thank you' message sent by the user."""
+    logging.info("Someone typed 'thank you', wow.")
     user_name = message.from_user.first_name
 
     await message.answer_sticker(HUMBLE_STICKER)
@@ -152,8 +153,6 @@ async def react_to_thanks(message: types.Message):
 
 @dp.message_handler(state=None)
 async def another_help_message(message: types.Message):
-    """
-    This function will be called when the user types a random message.
-    """
+    """React to a random message sent by the user."""
     await message.answer_sticker(QUESTION_STICKER)
     await message.reply("See <b>/help</b> for more information.")

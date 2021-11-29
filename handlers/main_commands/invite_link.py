@@ -6,7 +6,6 @@ import logging
 
 from aiogram import types
 from aiogram.utils.deep_linking import get_start_link
-
 from loader import dp
 from utils.get_db_data import get_team_id
 
@@ -14,9 +13,9 @@ from utils.get_db_data import get_team_id
 @dp.message_handler(commands="invite_link")
 @dp.throttled(rate=2)
 async def send_invite_link(message: types.Message):
-    """
-    Generates an invite link to the user's current team and sends it back.
-    """
+    """Generate an invite link to the user's current team and send it."""
+    logging.info("providing invite link.")
+
     user_id = message.from_user.id
     team_id = await get_team_id(user_id)
 

@@ -4,23 +4,26 @@ Keyboard: show, delete, modify.
 """
 
 import logging
+from typing import Union
 
 from aiogram import types
-
 from loader import dp, queues
-from utils.get_db_data import (
-    get_team_id,
-    get_setup_person,
-)
+from utils.get_db_data import get_setup_person, get_team_id
 from utils.sticker_file_ids import NOPE_STICKER
 
 
-async def get_admin_keyboard():
-    """
-    Returns an inline keyboard for the admin issuing /queues command.
+async def get_admin_keyboard() -> types.InlineKeyboardMarkup:
+    """Return an inline keyboard for the admin issuing /queues command.
+
     Admin keyboard is different from user keyboard since it has more
-    options (modify, delete, create)
+    options (modify, delete, create).
+
+    Returns
+    -------
+    types.InlineKeyboardMarkup
+        Telegram inline keyboard for the admin (aka setup person)
     """
+
     keyboard = types.InlineKeyboardMarkup(row_width=2)
 
     buttons = [
@@ -47,9 +50,17 @@ async def get_admin_keyboard():
 
 
 async def get_user_keyboard():
+    """Return an inline keyboard for non-admin issuing /queues command.
+
+    This keyboard is different from the admin one since it only has
+    one option: Show Queue.
+
+    Returns
+    -------
+    types.InlineKeyboardMarkup
+        Telegram inline keyboard to be used by non-admin
     """
-    Returns an inline keyboard for any user (not admin) issuing /queues command.
-    """
+
     keyboard = types.InlineKeyboardMarkup()
 
     keyboard.add(
@@ -65,16 +76,20 @@ async def get_user_keyboard():
 @dp.message_handler(commands="queues", state="*")
 @dp.callback_query_handler(text="back")
 @dp.throttled(rate=2)
-async def show_queues(entity):
+async def list_queues(entity: Union[types.Message, types.CallbackQuery]):
+    """Present a list of queues user has along with some options.
+
+    Parameters
+    ----------
+    entity : Union[types.Message, types.CallbackQuery]
+        CallbackQuery when user clicks the Back button in queues
+        dialogue and Message when the /queues command is issued.
     """
-    Shows all the chore queues the user has along with some options on what can
-    be done with them. Accepts 'entity', which can either be a CallbackQuery or a Message.
-    It is a CallbackQuery when user clicks the Back button in the queues
-    dialogue and is a Message when the 'queues' command is issued.
-    """
+
+    logging.info("/queues command issued.")
     team_id = await get_team_id(entity.from_user.id)
 
-    if not team_id:
+    if not team_id and isinstance(entity, types.Message):
         # user is not a part of any team
         await entity.reply(
             "You are not a part of any team yet. To set up a new team for "
@@ -107,8 +122,7 @@ async def show_queues(entity):
             "To set up a new queue, press <b>Create New Queue</b>."
         )
     elif queues_data:
-        # every user other than the admin is using /queues command
-        # at least one queue is set up
+        # this is non-admin user and at least one queue is set up
         queue_names = queues_data.keys()
 
         queues_list = ""
@@ -134,7 +148,7 @@ async def show_queues(entity):
             "<b>Create New Queue</b> button below."
         )
 
-    if type(entity) == types.CallbackQuery:
+    if isinstance(entity, types.CallbackQuery):
         await entity.message.edit_text(text, reply_markup=keyboard)
         await entity.answer()
     else:
@@ -142,10 +156,8 @@ async def show_queues(entity):
 
 
 @dp.callback_query_handler(text=["show", "modify", "delete"])
-async def ask_which_q(call: types.CallbackQuery):
-    """
-    Asks the user which queue they'd like to see/modify.
-    """
+async def ask_which_queue(call: types.CallbackQuery):
+    """Ask the user which queue they'd like to see/modify/delete."""
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
     operation = call.data
@@ -154,7 +166,6 @@ async def ask_which_q(call: types.CallbackQuery):
         setup_person = await get_setup_person(team_id)
 
         await call.message.answer_sticker(NOPE_STICKER)
-
         await call.message.answer(
             f"Sorry, you do not have permission to {operation} queues.\nAs "
             "part of a security measure, only the person who did the initial "
@@ -169,17 +180,17 @@ async def ask_which_q(call: types.CallbackQuery):
 
         queue_names = queues_data["queues"].keys()
 
+        keyboard = types.InlineKeyboardMarkup(row_width=2)
+
         buttons = []
         queues_list = ""
         for queue in queue_names:
             queues_list += f"- <i>{queue.capitalize()}</i>\n"
             buttons.append(
                 types.InlineKeyboardButton(
-                    text=queue.capitalize(), callback_data=f"{operation}_{queue}"
+                    text=queue, callback_data=f"{operation}_{queue}"
                 )
             )
-
-        keyboard = types.InlineKeyboardMarkup(row_width=2)
 
         keyboard.add(*buttons)
         keyboard.add(types.InlineKeyboardButton(text="Back", callback_data="back"))
