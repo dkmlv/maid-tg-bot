@@ -13,31 +13,14 @@ from loader import dp, teams
 from utils.get_db_data import get_team_id
 
 
-async def ask_to_add_to_group(user_id):
-    """Ask the user to add the bot to the roommates group chat.
-
-    Later on, the bot will resolve conflicts in the group chat by
-    asking if any user can substitute the one who can't do the chore.
-
-    Parameters
-    ----------
-    user_id : int
-        Telegram user id to which the bot should send the message
-    """
-
+async def add_to_group_keyboard() -> types.InlineKeyboardMarkup:
+    """Return a keyboard with the Add to Group button"""
     link = await get_startgroup_link(payload="_", encode=True)
 
     keyboard = types.InlineKeyboardMarkup()
     keyboard.add(types.InlineKeyboardButton(text="Add to Group", url=link))
 
-    await dp.bot.send_message(
-        user_id,
-        "Also I'd like to kindly ask you to add me to your roommates' group "
-        "here on Telegram. If you don't already have one, please create it "
-        "and add me there. Otherwise, whenever there is a problem with the "
-        "queue, I won't be able to help you.",
-        reply_markup=keyboard,
-    )
+    return keyboard
 
 
 @dp.my_chat_member_handler(chat_type=("group", "supergroup"))

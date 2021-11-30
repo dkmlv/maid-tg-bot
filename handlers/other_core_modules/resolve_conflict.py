@@ -28,6 +28,8 @@ from utils.sticker_file_ids import (
     YAY_STICKER,
 )
 
+from ..main_commands.group_stuff import add_to_group_keyboard
+
 HOURS = 2
 
 
@@ -107,11 +109,13 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
     team_id = await get_team_id(message.from_user.id)
 
     if not group_chat_id:
+        keyboard = await add_to_group_keyboard()
         await message.answer(
             "Looks like you don't have a group chat.\nPlease create a group ("
             "if you don't already have one) and add me there, so that we can "
-            "solve this problem. Once I'm added to the group, send me the "
-            "reason again."
+            "solve this problem. Once I'm added to the group, <b>send me the "
+            "reason again</b>.",
+            reply_markup=keyboard,
         )
         return
 

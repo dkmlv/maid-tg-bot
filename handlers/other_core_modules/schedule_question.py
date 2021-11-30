@@ -15,7 +15,7 @@ from aiogram.utils import exceptions
 from loader import dp, sched
 from states.all_states import QueueSetup
 from utils.get_db_data import get_current_turn, get_queue_array, get_team_id
-from utils.sticker_file_ids import CHARISMATIC_STICKER
+from utils.sticker_file_ids import YAY_STICKER
 
 
 async def send_question(team_id: int, queue_name: str):
@@ -104,7 +104,9 @@ async def schedule_question(message: types.Message, state: FSMContext):
         replace_existing=True,
     )
 
-    await message.answer_sticker(CHARISMATIC_STICKER)
-    await message.answer("Great, I'll try my best to keep track of this queue.")
+    await message.answer_sticker(YAY_STICKER)
+    await message.answer(
+        "Great, queue created. You can now see it when you use <b>/queues</b>."
+    )
 
     await state.finish()

@@ -11,7 +11,7 @@ from utils.get_db_data import get_team_id
 from utils.sticker_file_ids import CHARISMATIC_STICKER
 
 from ..other_core_modules.get_confirmation import get_confirmation
-from .group_stuff import ask_to_add_to_group
+from .group_stuff import add_to_group_keyboard
 from .invite_link import send_invite_link
 
 
@@ -37,7 +37,16 @@ async def check_user(message: types.Message):
     else:
         await setup_team(user_id, user_name)
         await send_invite_link(message)
-        await ask_to_add_to_group(user_id)
+
+        # ask to add to group
+        keyboard = await add_to_group_keyboard()
+        await message.answer(
+            "Also I'd like to kindly ask you to add me to your roommates' "
+            "group here on Telegram. If you don't already have one, please "
+            "create it and add me there. Otherwise, whenever there is a "
+            "problem with the queue, I won't be able to help you.",
+            reply_markup=keyboard,
+        )
 
 
 async def setup_team(user_id, user_name):
