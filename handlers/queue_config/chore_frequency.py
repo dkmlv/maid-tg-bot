@@ -23,11 +23,15 @@ WEEK_DAYS = [
 
 async def ask_chore_frequency(call: types.CallbackQuery):
     """Ask the user how often the chore is done."""
-    keyboard = types.InlineKeyboardMarkup()
+    await QueueSetup.setting_freq.set()
+
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
 
     buttons = [
         types.InlineKeyboardButton(text="Every Day", callback_data="*"),
+        types.InlineKeyboardButton(text="Every Other Day", callback_data="other"),
         types.InlineKeyboardButton(text="Once a Week", callback_data="once"),
+        types.InlineKeyboardButton(text="Custom", callback_data="custom_freq"),
     ]
     keyboard.add(*buttons)
 
@@ -38,7 +42,7 @@ async def ask_chore_frequency(call: types.CallbackQuery):
     await call.answer()
 
 
-@dp.callback_query_handler(text="once", state=QueueSetup.setting_up)
+@dp.callback_query_handler(text="once", state=QueueSetup.setting_freq)
 async def ask_which_day(call: types.CallbackQuery):
     """Ask the user what day of the week the chore is done."""
     keyboard = types.InlineKeyboardMarkup(row_width=3)
@@ -61,10 +65,80 @@ async def ask_which_day(call: types.CallbackQuery):
     await call.answer()
 
 
-@dp.callback_query_handler(
-    text=[0, 1, 2, 3, 4, 5, 6, "*"],
-    state=QueueSetup.setting_up,
-)
+@dp.callback_query_handler(text="other", state=QueueSetup.setting_freq)
+async def ask_day_combos(call: types.CallbackQuery):
+    """Ask user to pick a combination of days for every other day."""
+    keyboard = types.InlineKeyboardMarkup(row_width=2)
+
+    buttons = [
+        types.InlineKeyboardButton(
+            text="Mon, Wed, Fri",
+            callback_data="0,2,4",
+        ),
+        types.InlineKeyboardButton(
+            text="Tue, Thu, Sat",
+            callback_data="1,3,5",
+        ),
+    ]
+    keyboard.add(*buttons)
+
+    await call.message.edit_text(
+        "Please choose the option that fits you.",
+        reply_markup=keyboard,
+    )
+    await call.answer()
+
+
+@dp.callback_query_handler(text="custom_freq", state=QueueSetup.setting_freq)
+async def ask_to_type_days(call: types.CallbackQuery):
+    """Ask user to type out the names of weekdays."""
+    await QueueSetup.waiting_for_custom_freq.set()
+    await call.message.edit_text(
+        "Please type out the names of weekdays when this chore is done.\n\n"
+        "<b>For example:</b> Tuesday, Friday, Sunday"
+    )
+    await call.answer()
+
+
+@dp.message_handler(state=QueueSetup.waiting_for_custom_freq)
+async def check_days_and_confirm(message: types.Message):
+    """Check that user typed days correctly and confirm the days."""
+    weekdays = message.text.split(", ")
+
+    callback_data = ""
+    for weekday in weekdays:
+        try:
+            index = WEEK_DAYS.index(weekday.lower())
+        except ValueError:
+            await message.reply(
+                "Are you sure you typed in the right format?\n\n"
+                "<b>For example:</b> Tuesday, Friday, Sunday"
+            )
+            return
+        else:
+            if weekday == weekdays[-1]:
+                callback_data += str(index)
+            else:
+                callback_data += f"{index},"
+
+    await QueueSetup.setting_freq.set()
+
+    print(callback_data)
+
+    keyboard = types.InlineKeyboardMarkup()
+    buttons = [
+        types.InlineKeyboardButton(text="Yes", callback_data=callback_data),
+        types.InlineKeyboardButton(text="No", callback_data="custom_freq"),
+    ]
+    keyboard.add(*buttons)
+
+    await message.answer(
+        f"Just to confirm, the chore is done on: {message.text}, right?",
+        reply_markup=keyboard,
+    )
+
+
+@dp.callback_query_handler(state=QueueSetup.setting_freq)
 async def ask_time(call: types.CallbackQuery, state: FSMContext):
     """Ask the user what time should the question be sent.
 
