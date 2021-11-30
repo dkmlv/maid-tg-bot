@@ -17,7 +17,7 @@ async def get_admin_keyboard() -> types.InlineKeyboardMarkup:
     """Return an inline keyboard for the admin issuing /queues command.
 
     Admin keyboard is different from user keyboard since it has more
-    options (modify, delete, create).
+    options (modify, pause, resume, delete, create).
 
     Returns
     -------
@@ -35,6 +35,14 @@ async def get_admin_keyboard() -> types.InlineKeyboardMarkup:
         types.InlineKeyboardButton(
             text="Modify Queue",
             callback_data="modify",
+        ),
+        types.InlineKeyboardButton(
+            text="Pause Queue",
+            callback_data="pause",
+        ),
+        types.InlineKeyboardButton(
+            text="Resume Queue",
+            callback_data="resume",
         ),
         types.InlineKeyboardButton(
             text="Delete Queue",
@@ -152,17 +160,25 @@ async def list_queues(entity: Union[types.Message, types.CallbackQuery]):
         await entity.reply(text, reply_markup=keyboard)
 
 
-@dp.callback_query_handler(text=["show", "modify", "delete"])
+@dp.callback_query_handler(text=["show", "modify", "pause", "resume", "delete"])
 async def ask_which_queue(call: types.CallbackQuery):
     """Ask the user which queue they'd like to see/modify/delete."""
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
-    assert team_id is not None
     operation = call.data
 
-    if (operation == "modify" or operation == "delete") and user_id != team_id:
-        setup_person = await get_setup_person(team_id)
+    try:
+        setup_person = await get_setup_person(team_id)  # type: ignore
+    except TypeError:
+        # someone who never talked to bot in private is pressing
+        await call.message.answer(
+            '<a href="https://youtu.be/cw9FIeHbdB8?t=4">Wait a minute, '
+            "who are you?</a>",
+            disable_web_page_preview=True,
+        )
+        return
 
+    if operation != "show" and user_id != team_id:
         await call.message.answer_sticker(NOPE_STICKER)
         await call.message.answer(
             f"Sorry, you do not have permission to {operation} queues.\nAs "

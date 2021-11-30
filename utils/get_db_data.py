@@ -25,7 +25,7 @@ async def get_team_id(user_id: int) -> Union[int, None]:
     return team_id
 
 
-async def get_team_members(user_id: int) -> list:
+async def get_team_members(user_id: int) -> dict:
     """Return the team members a user has based on their user id."""
     team_id = await get_team_id(user_id)
     team_data = await teams.find_one(

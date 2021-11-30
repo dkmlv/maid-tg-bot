@@ -9,3 +9,4 @@ class QueueSetup(StatesGroup):
 
 class TrackingQueue(StatesGroup):
     waiting_for_reason = State()
+    waiting_for_number = State()

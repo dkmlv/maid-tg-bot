@@ -60,13 +60,20 @@ async def create_queue(user_id: int, queue_name: str) -> list:
 @dp.callback_query_handler(text="create")
 async def pick_queue_name(call: types.CallbackQuery):
     """Ask the user to pick a queue name."""
-    await call.message.delete_reply_markup()
-
     user_id = call.from_user.id
     team_id = await get_team_id(user_id)
 
     if user_id != team_id:
-        setup_person = await get_setup_person(team_id)
+        try:
+            setup_person = await get_setup_person(team_id)  # type: ignore
+        except TypeError:
+            # someone who never talked to bot in private is pressing
+            await call.message.answer(
+                '<a href="https://youtu.be/cw9FIeHbdB8?t=4">Wait a minute, '
+                "who are you?</a>",
+                disable_web_page_preview=True,
+            )
+            return
 
         await call.message.answer_sticker(NOPE_STICKER)
 
@@ -77,6 +84,8 @@ async def pick_queue_name(call: types.CallbackQuery):
             f"roommates, that person is {setup_person}."
         )
     else:
+        await call.message.delete_reply_markup()
+
         keyboard = types.InlineKeyboardMarkup(row_width=2)
 
         buttons = [

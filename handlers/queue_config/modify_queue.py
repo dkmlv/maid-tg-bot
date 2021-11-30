@@ -15,7 +15,7 @@ from utils.get_db_data import get_queue_array, get_queue_list, get_team_id
 
 @dp.callback_query_handler(text_startswith="modify_")
 async def modify_a_queue(call: types.CallbackQuery, state: FSMContext):
-    """Reset the current_turn and presents the queue for modification."""
+    """Reset the current_turn and present the queue for modification."""
     logging.info("Modifying queue.")
 
     await QueueSetup.setting_up.set()
@@ -25,7 +25,7 @@ async def modify_a_queue(call: types.CallbackQuery, state: FSMContext):
 
     await state.update_data(queue_name=queue_name)
 
-    queue_array = await get_queue_array(team_id, queue_name)
+    queue_array = await get_queue_array(team_id, queue_name)  # type: ignore
 
     # resetting current_turn
     for index, member in enumerate(queue_array):
