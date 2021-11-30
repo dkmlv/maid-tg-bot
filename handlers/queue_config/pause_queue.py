@@ -32,10 +32,12 @@ async def ask_days_num(call: types.CallbackQuery, state: FSMContext):
 async def resume_the_job(job_id: str):
     """Find the job instance with `job_id` and resume the job."""
     jobs = sched.get_jobs(jobstore="mongo")
-    for job in jobs:
-        if job.id == job_id:
-            job.resume()
-            break
+    job = sched.get_job(job_id=job_id, jobstore="mongo")
+
+    if job:
+        job.resume()
+    else:
+        logging.error("UNEXPECTED: Job to resume not found.")
 
 
 @dp.message_handler(regexp=r"^[0-9]+$", state=TrackingQueue.waiting_for_number)

@@ -2,15 +2,56 @@
 Deleting any user from their present roommates' team.
 """
 
+import datetime as dt
 import logging
 
 from aiogram import types
+from apscheduler.triggers.cron import CronTrigger
 
 from loader import dp, queues, sched, teams, users
 from utils.get_db_data import get_current_turn, get_team_id, get_team_members
 from utils.sticker_file_ids import NOPE_STICKER
 
 from .transfer_turn import mark_next_person
+
+
+async def erased_user_ignored(job_id: str) -> bool:
+    """Check if user ignored bot's question.
+
+    There may be a case when the user decides to erase themselves after
+    getting the message that it's their turn to do sth. If they ignored
+    that message and just decide to leave, bot should detect that and
+    schedule a question to the next user in the queue asking if they
+    have time to complete the chore.
+
+    Parameters
+    ----------
+    job_id : str
+        The unique job indentifier
+
+    Returns
+    -------
+    bool
+        True if the user ignored bot's question.
+        False if the user hasn't or if no scheduled job is found.
+    """
+
+    job = sched.get_job(job_id, "mongo")
+
+    if not job:
+        return False
+
+    next_run = job.next_run_time
+
+    index = CronTrigger.FIELD_NAMES.index("day_of_week")
+    job_weekday = str(job.trigger.fields[index])
+
+    today = dt.datetime.today()
+    today_weekday = str(today.weekday())
+
+    # if the job scheduled to run on this weekday (or every day)
+    # and the next run date is not today, user ignored the message
+    return job_weekday in (today_weekday, "*") and today.day != next_run.day
 
 
 @dp.callback_query_handler(text="ask_which_user")
@@ -84,12 +125,30 @@ async def erase_from_queues(user_id: int, team_id: int):
 
             del queue_array[ct_pos]
 
-            # message user that its their turn now
-            await dp.bot.send_message(
-                next_id,
-                "Since one of your roommates left your team, it is now "
-                f"your turn in the {queue_name} queue.",
-            )
+            job_id = f"{queue_name}_{team_id}"
+
+            if await erased_user_ignored(job_id):
+                logging.info("User to be erased ignored the question.")
+
+                keyboard = types.InlineKeyboardMarkup(row_width=2)
+                buttons = [
+                    types.InlineKeyboardButton(
+                        text="Yes", callback_data=f"transfer_{queue_name}"
+                    ),
+                    types.InlineKeyboardButton(
+                        text="No", callback_data=f"ask_why_{queue_name}"
+                    ),
+                ]
+                keyboard.add(*buttons)
+
+                # message user that its their turn now
+                await dp.bot.send_message(
+                    next_id,
+                    "Since one of your roommates left your team, it is now "
+                    f"your turn in the {queue_name} queue. Will you have time "
+                    "to do this chore today?",
+                    reply_markup=keyboard,
+                )
         else:
             for index, member in enumerate(queue_array):
                 if member["user_id"] == user_id:
