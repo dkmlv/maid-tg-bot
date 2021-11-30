@@ -68,8 +68,8 @@ async def transfer_turn(call: types.CallbackQuery):
     elif queue_name == "Bread":
         await call.message.answer_sticker(WHATEVER_STICKER)
         await call.message.answer("Ah well, good luck with buying bread then.")
-        await call.answer()
     else:
         await call.message.answer_sticker(CHARISMATIC_STICKER)
         await call.message.answer("Great, good luck!")
-        await call.answer()
+
+    await call.answer()

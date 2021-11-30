@@ -1,1 +1,1 @@
-from . import bread, meal
+from . import bread, emoji, meal
