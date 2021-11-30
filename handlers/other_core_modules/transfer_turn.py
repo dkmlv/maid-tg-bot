@@ -10,7 +10,9 @@ from aiogram import types
 
 from loader import dp, queues
 from utils.get_db_data import get_queue_array, get_team_id
-from utils.sticker_file_ids import CHARISMATIC_STICKER
+from utils.sticker_file_ids import CHARISMATIC_STICKER, WHATEVER_STICKER
+
+from ..extras.meal import ask_meal_name
 
 
 async def mark_next_person(queue_array: list) -> Tuple[list, int]:
@@ -54,12 +56,20 @@ async def transfer_turn(call: types.CallbackQuery):
 
     team_id = await get_team_id(call.from_user.id)
     queue_name = call.data.split("_")[1]
-    queue_array = await get_queue_array(team_id, queue_name)
+    queue_array = await get_queue_array(team_id, queue_name)  # type: ignore
 
     await mark_next_person(queue_array)
 
     new_data = {f"queues.{queue_name}": queue_array}
     await queues.update_one({"id": team_id}, {"$set": new_data}, upsert=True)
 
-    await call.message.answer_sticker(CHARISMATIC_STICKER)
-    await call.message.answer("Great, good luck!")
+    if queue_name == "Cooking":
+        await ask_meal_name(call.from_user.id)
+    elif queue_name == "Bread":
+        await call.message.answer_sticker(WHATEVER_STICKER)
+        await call.message.answer("Ah well, good luck with buying bread then.")
+        await call.answer()
+    else:
+        await call.message.answer_sticker(CHARISMATIC_STICKER)
+        await call.message.answer("Great, good luck!")
+        await call.answer()
