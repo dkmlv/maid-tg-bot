@@ -13,14 +13,11 @@ from aiogram.dispatcher import FSMContext
 from aiogram.utils import exceptions
 
 from loader import dp, sched
-from states.all_states import QueueSetup, TrackingQueue
-from utils.get_db_data import (
-    get_current_turn,
-    get_queue_array,
-    get_team_chat,
-    get_team_id,
-)
+from states.all_states import QueueSetup
+from utils.get_db_data import get_current_turn, get_queue_array, get_team_id
 from utils.sticker_file_ids import YAY_STICKER
+
+from ..other_core_modules.erase_team import erase_team
 
 
 async def send_question(team_id: int, queue_name: str):
@@ -61,13 +58,18 @@ async def send_question(team_id: int, queue_name: str):
         await dp.bot.send_message(user_id, text, reply_markup=keyboard)
     except exceptions.BotBlocked:
         logging.error(f"Target [ID:{user_id}]: blocked by user")
-        # inform the admin that user has blocked the bot
-        await dp.bot.send_message(
-            team_id,
-            f"In your team, <b>{user_name}</b> has blocked me. You might "
-            "wanna talk to them about it or remove them from your team using "
-            "the <b>/list</b> command.",
-        )
+
+        if user_id != team_id:
+            # inform the admin that user has blocked the bot
+            await dp.bot.send_message(
+                team_id,
+                f"In your team, <b>{user_name}</b> has blocked me. You might "
+                "wanna talk to them about it or remove them from your team using "
+                "the <b>/list</b> command.",
+            )
+        else:
+            # admin has blocked the bot, delete the whole team
+            await erase_team(user_id)
     except exceptions.RetryAfter as e:
         logging.error(
             f"Target [ID:{user_id}]: Flood limit is exceeded. Sleep {e.timeout} seconds."

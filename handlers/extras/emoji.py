@@ -139,11 +139,13 @@ async def react_to_emoji(message: types.Message):
     emoji = f"U+{ord(message.text):X}"
 
     if emoji in FOOD_EMOJIS:
+        logging.info("Reacting to food emoji.")
         await message.answer_sticker(IS_FOR_ME_STICKER)
         await message.answer(
             f"is for me? {emojize(':point_right::point_left:')}",
         )
     elif emoji in WEAPON_EMOJIS:
+        logging.info("Reacting to weapon emoji.")
         user_name = message.from_user.first_name
 
         await message.answer_sticker(AMUSED_STICKER)
@@ -151,5 +153,6 @@ async def react_to_emoji(message: types.Message):
             f"It will take a lot more than that to kill me, {user_name}-san."
         )
     else:
+        logging.info("Reacting to emoji.")
         await message.answer_sticker(QUESTION_STICKER)
         await message.answer("Why are you sending me random emojis?")
