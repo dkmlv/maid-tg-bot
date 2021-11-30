@@ -4,6 +4,8 @@ from . import (
     delete_queue,
     marking,
     modify_queue,
+    pause_queue,
     reorder_queue,
+    resume_queue,
     show_queue,
 )
