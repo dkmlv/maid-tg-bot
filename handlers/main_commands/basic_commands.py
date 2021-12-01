@@ -166,12 +166,12 @@ async def give_help(message: types.Message):
         "<i>/setup</i> - initial setup process (person who does this setup "
         "becomes the admin in their team)\n"
         "<i>/invite_link</i> - invite link to the current team\n"
-        "<i>/feedback</i> - give contacts\n"
+        "<i>/contacts</i> - give contacts\n"
     )
     await message.reply(help_text)
 
 
-@dp.message_handler(commands="feedback")
+@dp.message_handler(commands="contacts")
 async def give_contacts(message: types.Message):
     """Give contact of dev (hey, that's me) and sticker pack channel."""
     logging.info("Providing contacts.")
