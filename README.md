@@ -1,6 +1,6 @@
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE) [![Telegram](https://img.shields.io/badge/telegram-%40maidTgBot-blue)](https://t.me/maidTgBot)
 
-# Maid Telgram Bot
+# Maid Telegram Bot
 ## _Managing house chores is not much of a pain anymore!_
 
 A simple reminder bot that is aimed at helping roommates do house chores. The time zone is set to `Asia/Tashkent`, but this can be changed if you plan to launch your own instance of the bot. This bot can:
