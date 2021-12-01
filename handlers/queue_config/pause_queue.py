@@ -31,7 +31,6 @@ async def ask_days_num(call: types.CallbackQuery, state: FSMContext):
 
 async def resume_the_job(job_id: str):
     """Find the job instance with `job_id` and resume the job."""
-    jobs = sched.get_jobs(jobstore="mongo")
     job = sched.get_job(job_id=job_id, jobstore="mongo")
 
     if job:
@@ -54,7 +53,7 @@ async def pause_queue(message: types.Message, state: FSMContext):
     sched.pause_job(job_id=job_id, jobstore="mongo")
 
     today = dt.datetime.today()
-    days = dt.timedelta(minutes=int(message.text))
+    days = dt.timedelta(days=int(message.text))
     resume_date = (today + days).isoformat()
 
     try:

@@ -7,6 +7,7 @@ import logging
 
 from aiogram import types
 from aiogram.utils.deep_linking import decode_payload
+from aiogram.utils.emoji import emojize
 
 from loader import dp, teams, users
 from utils.get_db_data import get_setup_person, get_team_id, get_team_members
@@ -137,9 +138,33 @@ async def give_help(message: types.Message):
     """Provide instructions on how to use the bot + brief info."""
     logging.info("/help command issued.")
 
-    await message.reply(
-        "<b>Instructions:</b>\n" "This is a test message that will be changed later."
+    help_text = (
+        f"<b>The Strongest Maid in History, Tohru!</b> {emojize(':dragon_face:')}"
+        "\n\nI will help you and your roommates do house chores by keeping "
+        "track of all the queues you have set up. I will do that by sending "
+        "reminders in the form of questions to the person whose turn it is in "
+        f"the queue.\n\n<b>For Example</b> {emojize(':scroll:')}\nIf it's your "
+        "turn in the Cleaning queue today, you will receive a message like:\n"
+        "<i>'Hey, today is your turn in the Cleaning queue. Will you have enough "
+        "time to do this chore today?''</i>\n\nIf you answer <i>'Yes'</i>, I "
+        "will assume the chore will be done that day and transfer the turn to "
+        "the next person in the queue.\n\nIf you answer <i>'No'</i>, you will "
+        "be asked to type a reason why you can't do it and it will be forwarded "
+        "to your group chat along with a question of whether someone can swap "
+        "places with you and do the chore in your turn. If no one can do that, "
+        "the chore is incomplete and it'll still be your turn next time.\n\n"
+        f"<b>Commands</b> {emojize(':speech_balloon:')}\n"
+        "<i>/start</i> - brief info about me\n"
+        "<i>/help</i> - detailed info on what I do and how to work with me\n"
+        "<i>/queues</i> - queue related operations (person who did the setup, "
+        "aka admin, has more options available)\n"
+        "<i>/list</i> - see the list of roommates (admin has the option to "
+        "remove users with this)\n"
+        "<i>/setup</i> - initial setup process (person who does this setup "
+        "becomes the admin in their team)\n"
+        "<i>/invite_link</i> - invite link to the current team\n"
     )
+    await message.reply(help_text)
 
 
 @dp.message_handler(regexp="(thank you|ty|thx|thanks)", state=None)

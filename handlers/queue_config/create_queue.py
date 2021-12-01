@@ -73,6 +73,7 @@ async def pick_queue_name(call: types.CallbackQuery):
                 "who are you?</a>",
                 disable_web_page_preview=True,
             )
+            await call.answer()
             return
 
         await call.message.answer_sticker(NOPE_STICKER)
@@ -215,6 +216,7 @@ async def create_noncustom_queue(call: types.CallbackQuery, state: FSMContext):
         await call.message.answer(
             "A queue with that name already exists. Try a different one."
         )
+        await call.answer()
         return
 
     await QueueSetup.setting_up.set()

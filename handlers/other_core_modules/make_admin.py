@@ -104,3 +104,5 @@ async def make_admin(call: types.CallbackQuery):
         "Admin priviliges transferred. Continue with removing you from the team?",
         reply_markup=keyboard,
     )
+
+    await call.answer()

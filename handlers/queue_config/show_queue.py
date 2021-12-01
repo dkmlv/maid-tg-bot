@@ -22,7 +22,7 @@ async def show_a_queue(call: types.CallbackQuery):
     team_id = await get_team_id(call.from_user.id)
     queue_type = call.data.split("_")[-1]
 
-    queue_array = await get_queue_array(team_id, queue_type)
+    queue_array = await get_queue_array(team_id, queue_type) # type: ignore
 
     queue_list = await get_queue_list(queue_array)
 

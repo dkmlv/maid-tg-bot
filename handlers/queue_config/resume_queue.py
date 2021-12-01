@@ -32,6 +32,7 @@ async def explicit_resume(call: types.CallbackQuery):
         await call.message.answer(
             "This queue wasn't paused, you don't have to resume it."
         )
+        await call.answer()
         return
 
     await call.message.edit_text(
@@ -46,4 +47,5 @@ async def explicit_resume(call: types.CallbackQuery):
             "queue. You will now continue recieving notifications for this "
             "queue. Good luck!",
         )
-        await call.answer()
+
+    await call.answer()

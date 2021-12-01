@@ -176,6 +176,7 @@ async def ask_which_queue(call: types.CallbackQuery):
             "who are you?</a>",
             disable_web_page_preview=True,
         )
+        await call.answer()
         return
 
     if operation != "show" and user_id != team_id:

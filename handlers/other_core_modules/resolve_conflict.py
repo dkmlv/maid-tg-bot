@@ -92,6 +92,8 @@ async def ask_for_reason(call: types.CallbackQuery, state: FSMContext):
         "out there."
     )
 
+    await call.answer()
+
 
 @dp.message_handler(state=TrackingQueue.waiting_for_reason)
 async def inform_and_resolve(message: types.Message, state: FSMContext):
@@ -183,6 +185,7 @@ async def swap_users(call: types.CallbackQuery):
             "You are not a part of the roommates group, you should get in touch"
             " with others and get the <b>invite link</b>."
         )
+        await call.answer()
         return
     elif ct_pos == user_pos:
         # the person who said they cant do the chore clicked 'Yes, I can do it'
@@ -190,6 +193,7 @@ async def swap_users(call: types.CallbackQuery):
         await call.message.answer(
             f"I'm sorry, but you can't swap with yourself, {user_name}-san."
         )
+        await call.answer()
         return
 
     # reassigning current_turn

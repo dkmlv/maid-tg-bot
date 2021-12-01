@@ -96,3 +96,4 @@ async def cancel_erasing(call: types.CallbackQuery):
         "Operation cancelled. You can keep on knocking out those chores with "
         "your roommates."
     )
+    await call.answer()
