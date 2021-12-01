@@ -1,4 +1,4 @@
-[![GitHub](https://img.shields.io/github/license/DurbeKK/maid-tg-bot)](https://github.com/DurbeKK/maid-tg-bot/blob/main/LICENSE) [![Telegram](https://img.shields.io/badge/telegram-%40maidTgBot-blue)](https://t.me/maidTgBot)
+[![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE) [![Telegram](https://img.shields.io/badge/telegram-%40maidTgBot-blue)](https://t.me/maidTgBot)
 
 # Maid Telgram Bot
 ## _Managing house chores is not much of a pain anymore!_
