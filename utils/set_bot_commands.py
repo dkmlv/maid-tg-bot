@@ -15,5 +15,6 @@ async def set_default_commands(dp):
             types.BotCommand("list", "see the list of roommates"),
             types.BotCommand("setup", "initial setup process"),
             types.BotCommand("invite_link", "link to the current team"),
+            types.BotCommand("feedback", "give contacts"),
         ]
     )

@@ -153,6 +153,9 @@ async def give_help(message: types.Message):
         "to your group chat along with a question of whether someone can swap "
         "places with you and do the chore in your turn. If no one can do that, "
         "the chore is incomplete and it'll still be your turn next time.\n\n"
+        "<b>IMPORTANT NOTE:</b> My time zone is set to Asia/Tashkent (+5). If "
+        "you don't reside in this timezone, look up the time difference and set "
+        "the time for your reminders accordingly.\n\n"
         f"<b>Commands</b> {emojize(':speech_balloon:')}\n"
         "<i>/start</i> - brief info about me\n"
         "<i>/help</i> - detailed info on what I do and how to work with me\n"
@@ -163,11 +166,25 @@ async def give_help(message: types.Message):
         "<i>/setup</i> - initial setup process (person who does this setup "
         "becomes the admin in their team)\n"
         "<i>/invite_link</i> - invite link to the current team\n"
+        "<i>/feedback</i> - give contacts\n"
     )
     await message.reply(help_text)
 
 
-@dp.message_handler(regexp="(thank you|ty|thx|thanks)", state=None)
+@dp.message_handler(commands="feedback")
+async def give_contacts(message: types.Message):
+    """Give contact of dev (hey, that's me) and sticker pack channel."""
+    logging.info("Providing contacts.")
+    await message.reply(
+        "<b>Contacts</b>\n"
+        "If you encountered an issue while working with me or if you'd just "
+        "like to chat, you can contact the developer @whereismyxanax.\n"
+        "Like the sticker pack? Check out the creator's channel @sethdistro "
+        "and @sticker_list for more awesome stickers."
+    )
+
+
+@dp.message_handler(regexp="(thank (yo)?u|ty|thx|thanks)", state=None)
 async def react_to_thanks(message: types.Message):
     """React to a 'thank you' message sent by the user."""
     logging.info("Someone typed 'thank you', wow.")
