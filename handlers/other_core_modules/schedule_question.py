@@ -114,6 +114,7 @@ async def schedule_question(message: types.Message, state: FSMContext):
         hour=hour,
         minute=minute,
         replace_existing=True,
+        misfire_grace_time=None,
     )
 
     await message.answer_sticker(YAY_STICKER)

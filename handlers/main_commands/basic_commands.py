@@ -75,7 +75,7 @@ async def greet(message: types.Message):
         )
     elif message.chat.type in ("group", "supergroup"):
         await message.answer(
-            "Hi everyone!\n\nMy name is Tohru and I will try me best to make "
+            "Hi everyone!\n\nMy name is Tohru and I will try my best to make "
             "your lives a bit easier.\nWhenever there is a problem with a queue"
             ", I will let you know here so that we can figure out a solution "
             "together.\n\nI'm very excited about working with you all.",

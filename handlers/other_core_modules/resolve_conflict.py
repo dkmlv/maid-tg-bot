@@ -134,6 +134,7 @@ async def inform_and_resolve(message: types.Message, state: FSMContext):
         jobstore="mongo",
         id=f"resolving_{queue_name}_{group_chat_id}",
         replace_existing=True,
+        misfire_grace_time=None,
     )
 
     keyboard = types.InlineKeyboardMarkup()
