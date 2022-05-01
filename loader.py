@@ -10,7 +10,7 @@ from pymongo import MongoClient
 from data import config
 
 uri = "mongodb+srv://{}:{}@{}/maid?retryWrites=true&w=majority".format(
-    config.DB_USER, config.DB_PSSWD, config.HOST
+    config.DB_USER, config.DB_PASSWORD, config.HOST
 )
 client = motor.motor_asyncio.AsyncIOMotorClient(uri)
 db = client.maid
@@ -23,13 +23,13 @@ queues = db.queues
 bot = Bot(token=config.BOT_TOKEN, parse_mode=types.ParseMode.HTML)
 
 fsm_uri = "mongodb+srv://{}:{}@{}/aiogram_fsm?retryWrites=true&w=majority".format(
-    config.DB_USER, config.DB_PSSWD, config.HOST
+    config.DB_USER, config.DB_PASSWORD, config.HOST
 )
 storage = MongoStorage(uri=fsm_uri)
 dp = Dispatcher(bot, storage=storage)
 
 scheduler_uri = "mongodb+srv://{}:{}@{}/apscheduler?retryWrites=true&w=majority".format(
-    config.DB_USER, config.DB_PSSWD, config.HOST
+    config.DB_USER, config.DB_PASSWORD, config.HOST
 )
 # motor, unfortunately, does not work
 scheduler_client = MongoClient(scheduler_uri)

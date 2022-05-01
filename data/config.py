@@ -8,5 +8,5 @@ ADMIN = env.str("ADMIN")
 
 # mongodb stuff
 DB_USER = env.str("DATABASE_ROOT_USERNAME")
-DB_PSSWD = env.str("DATABASE_ROOT_PASSWORD")
+DB_PASSWORD = env.str("DATABASE_ROOT_PASSWORD")
 HOST = env.str("DB_HOST")
