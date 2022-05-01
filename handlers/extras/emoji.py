@@ -136,7 +136,8 @@ WEAPON_EMOJIS = ["U+1F52A", "U+1F5E1", "U+1F528", "U+1FA93", "U+1F52B"]
 async def react_to_emoji(message: types.Message):
     """React to any emoji sent by the user."""
     # converting the emoji into unicode hex format
-    emoji = f"U+{ord(message.text):X}"
+    # will only react to first emoji if a lot of emojis are sent
+    emoji = f"U+{ord(message.text[0]):X}"
 
     if emoji in FOOD_EMOJIS:
         logging.info("Reacting to food emoji.")
