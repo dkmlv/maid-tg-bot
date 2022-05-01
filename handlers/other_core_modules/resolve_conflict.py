@@ -198,7 +198,8 @@ async def swap_users(call: types.CallbackQuery):
         return
 
     # reassigning current_turn
-    q_array[ct_pos]["current_turn"], q_array[user_pos]["current_turn"] = False, True
+    q_array[ct_pos]["current_turn"] = False
+    q_array[(ct_pos + 1) % len(q_array)]["current_turn"] = True
     # swapping positions in the queue
     q_array[ct_pos], q_array[user_pos] = q_array[user_pos], q_array[ct_pos]
 
