@@ -194,7 +194,7 @@ async def react_to_thanks(message: types.Message):
     await message.reply(f"No need, I'm just doing my job, {user_name}-san.")
 
 
-@dp.message_handler(state=None)
+@dp.message_handler(state=None, chat_type=types.ChatType.PRIVATE)
 async def another_help_message(message: types.Message):
     """React to a random message sent by the user."""
     await message.answer_sticker(QUESTION_STICKER)
