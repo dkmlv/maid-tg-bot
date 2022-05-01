@@ -133,3 +133,6 @@ Icon?
 
 # MAC OS stuff
 .DS_Store
+
+# attempting to use pycharm
+.idea/
