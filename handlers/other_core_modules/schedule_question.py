@@ -37,17 +37,23 @@ async def send_question(team_id: int, queue_name: str):
     queue_array = await get_queue_array(team_id, queue_name)
     user_id, user_name, _ = await get_current_turn(queue_array)
 
-    if queue_name == "Bread":
-        callback_data = "ask_if_theres_bread"
-    else:
-        callback_data = f"transfer_{queue_name}"
-
     keyboard = types.InlineKeyboardMarkup(row_width=2)
     buttons = [
-        types.InlineKeyboardButton(text="Yes", callback_data=callback_data),
-        types.InlineKeyboardButton(text="No", callback_data=f"ask_why_{queue_name}"),
+        types.InlineKeyboardButton(
+            text="Yes", callback_data=f"transfer_{queue_name}"
+        ),
+        types.InlineKeyboardButton(
+            text="No", callback_data=f"ask_why_{queue_name}"
+        ),
     ]
     keyboard.add(*buttons)
+
+    if queue_name == "Bread":
+        keyboard.add(
+            types.InlineKeyboardButton(
+                text="We have enough bread", callback_data="enough_bread"
+            )
+        )
 
     text = (
         f"Hey {user_name}, today is your turn in the <b>{queue_name}</b> queue. "
@@ -91,7 +97,9 @@ async def send_question(team_id: int, queue_name: str):
         logging.info(f"Target [ID:{user_id}]: success, question sent.")
 
 
-@dp.message_handler(regexp=r"[0-2]?\d:[0-5]\d", state=QueueSetup.waiting_for_time)
+@dp.message_handler(
+    regexp=r"[0-2]?\d:[0-5]\d", state=QueueSetup.waiting_for_time
+)
 async def schedule_question(message: types.Message, state: FSMContext):
     """Schedule the question to send to the current turn user."""
     team_id = await get_team_id(message.from_user.id)
